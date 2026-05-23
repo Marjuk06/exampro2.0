@@ -16,7 +16,7 @@ import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/components/providers/auth-provider";
 import { useStudentDashboard } from "@/hooks/queries/use-student-dashboard";
 import { getExamStatus, canStudentAccessExam } from "@/lib/exam/scoring";
-import type { Exam, ExamResult, RetakeRequest } from "@/types";
+import type { Exam, ExamResult } from "@/types";
 import { cn } from "@/lib/utils";
 import { useClientNow } from "@/hooks/use-client-now";
 import { ClientDate } from "@/components/ui/client-date";

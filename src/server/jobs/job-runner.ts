@@ -1,7 +1,4 @@
 import type { JobHandler, JobPayload } from "@/server/jobs/types";
-import { ensureJobHandlersRegistered } from "@/server/jobs/register-handlers";
-
-ensureJobHandlersRegistered();
 
 const handlers = new Map<string, JobHandler>();
 
@@ -11,6 +8,10 @@ export function registerJobHandler(handler: JobHandler): void {
 
 /** Inline runner — swap for Cloud Tasks / Pub/Sub later */
 export async function runJob(job: JobPayload): Promise<void> {
+  const { ensureJobHandlersRegistered } = await import(
+    "@/server/jobs/register-handlers"
+  );
+  ensureJobHandlersRegistered();
   const handler = handlers.get(job.type);
   if (!handler) {
     console.warn("[job] no handler for", job.type);

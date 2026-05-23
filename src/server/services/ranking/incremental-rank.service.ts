@@ -1,7 +1,4 @@
-import {
-  FieldValue,
-  type Firestore,
-} from "firebase-admin/firestore";
+import type { Firestore } from "firebase-admin/firestore";
 import { paths } from "@/lib/firebase/paths";
 import { computeRanks, type ScorableResult } from "@/features/rankings/compute";
 import { trackQuery } from "@/server/observability/query-metrics";

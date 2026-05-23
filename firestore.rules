@@ -1,0 +1,142 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function role() {
+      return isSignedIn() ? request.auth.token.role : null;
+    }
+
+    function isAdmin() {
+      return role() in ['admin', 'superadmin'];
+    }
+
+    function isSuperAdmin() {
+      return role() == 'superadmin';
+    }
+
+    // ——— User-owned data ———
+    match /artifacts/{appId}/users/{userId}/profile/{docId} {
+      allow read: if isOwner(userId) || isAdmin();
+      allow create, update: if isOwner(userId)
+        && request.resource.data.keys().hasOnly([
+          'uid', 'email', 'name', 'studentId', 'role', 'avatarUrl', 'bio',
+          'xp', 'level', 'title', 'streak', 'badges', 'stats', 'createdAt', 'updatedAt'
+        ])
+        && request.resource.data.uid == userId
+        && request.resource.data.role == 'student';
+      allow delete: if false;
+    }
+
+    match /artifacts/{appId}/users/{userId}/notifications/{notifId} {
+      allow read, update: if isOwner(userId);
+      allow create, delete: if false;
+    }
+
+    match /artifacts/{appId}/users/{userId}/bookmarks/{questionId} {
+      allow read, write: if isOwner(userId);
+    }
+
+    match /artifacts/{appId}/users/{userId}/exam_attempts/{attemptId} {
+      allow read: if isOwner(userId) || isAdmin();
+      allow write: if false;
+    }
+
+    // ——— Server-only aggregates (read via rules for clients) ———
+    match /artifacts/{appId}/public/data/exam_leaderboards/{examId} {
+      allow read: if isSignedIn();
+      allow write: if false;
+    }
+
+    match /artifacts/{appId}/public/data/exam_ranks/{rankId} {
+      allow read: if isSignedIn();
+      allow write: if false;
+    }
+
+    match /artifacts/{appId}/public/data/global_leaderboard/{uid} {
+      allow read: if isSignedIn();
+      allow write: if false;
+    }
+
+    match /artifacts/{appId}/public/data/exam_stats/{examId} {
+      allow read: if isSignedIn();
+      allow write: if false;
+    }
+
+    match /artifacts/{appId}/public/data/period_leaderboards/{periodKey} {
+      allow read: if isSignedIn();
+      allow write: if false;
+    }
+
+    match /artifacts/{appId}/public/data/subject_leaderboards/{subjectKey} {
+      allow read: if isSignedIn();
+      allow write: if false;
+    }
+
+    match /artifacts/{appId}/public/data/analytics/{doc=**} {
+      allow read: if isAdmin();
+      allow write: if false;
+    }
+
+    match /artifacts/{appId}/public/data/public_profiles/{studentId} {
+      allow read: if isSignedIn();
+      allow write: if false;
+    }
+
+    match /artifacts/{appId}/public/data/violations/{docId} {
+      allow read: if isAdmin();
+      allow write: if false;
+    }
+
+    // ——— Exams: read authenticated; write admin API only ———
+    match /artifacts/{appId}/public/data/exams/{examId} {
+      allow read: if isSignedIn();
+      allow write: if false;
+    }
+
+    // ——— Questions: read authenticated; write admin API only ———
+    match /artifacts/{appId}/public/data/questions/{questionId} {
+      allow read: if isSignedIn();
+      allow write: if false;
+    }
+
+    // ——— Results: own results OR admin ———
+    match /artifacts/{appId}/public/data/results/{resultId} {
+      allow read: if isSignedIn()
+        && (resource.data.uid == request.auth.uid || isAdmin());
+      allow write: if false;
+    }
+
+    // ——— Retakes: own OR admin read; write server only ———
+    match /artifacts/{appId}/public/data/retakes/{requestId} {
+      allow read: if isSignedIn()
+        && (resource.data.uid == request.auth.uid || isAdmin());
+      allow write: if false;
+    }
+
+    // ——— Live sessions: own OR admin ———
+    match /artifacts/{appId}/public/data/live_sessions/{sessionId} {
+      allow read: if isSignedIn()
+        && (resource.data.uid == request.auth.uid || isAdmin());
+      allow write: if false;
+    }
+
+    // ——— Settings: admin read only; write server only ———
+    match /artifacts/{appId}/public/data/config/settings {
+      allow read: if isAdmin();
+      allow write: if false;
+    }
+
+    // Deny any other paths under artifacts
+    match /artifacts/{appId}/{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

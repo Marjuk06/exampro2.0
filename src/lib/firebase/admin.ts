@@ -8,6 +8,7 @@ import {
 } from "@/lib/firebase/parse-credentials";
 
 let adminApp: App | null = null;
+let adminDb: Firestore | null = null;
 
 function getAdminApp(): App {
   if (adminApp) return adminApp;
@@ -35,7 +36,10 @@ export function getAdminAuth(): Auth {
 }
 
 export function getAdminDb(): Firestore {
-  return getFirestore(getAdminApp());
+  if (adminDb) return adminDb;
+  adminDb = getFirestore(getAdminApp());
+  adminDb.settings({ ignoreUndefinedProperties: true });
+  return adminDb;
 }
 
 export function getAdminStorage(): Storage {

@@ -1,0 +1,38 @@
+{
+  "name": "MCQ Pro — Ultimate Exam Center",
+  "short_name": "MCQ Pro",
+  "description": "Professional online examination platform with competitive rankings, practice modes, and real-time challenges.",
+  "start_url": "/student",
+  "display": "standalone",
+  "orientation": "any",
+  "theme_color": "#0F172A",
+  "background_color": "#0F172A",
+  "icons": [
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["education", "productivity"],
+  "screenshots": [],
+  "shortcuts": [
+    {
+      "name": "Practice Now",
+      "url": "/student?tab=practice",
+      "description": "Jump to practice center"
+    },
+    {
+      "name": "Leaderboard",
+      "url": "/student?tab=leaderboard",
+      "description": "View rankings"
+    }
+  ]
+}

@@ -60,9 +60,7 @@ export async function processMcqSubmission(
     ctx.result.answers ?? {}
   );
 
-  // ✅ FIXED: Batch all mistake writes into a single Firestore commit
-  // Previously: up to 100 sequential `db.doc().set()` calls in a for loop
-  // Now: 1 batch commit regardless of mistake count
+  // 1. Mistake handling (Batched)
   const mistakeBatch = db.batch();
   const now = Date.now();
   for (const q of ctx.questions) {
@@ -79,18 +77,12 @@ export async function processMcqSubmission(
   }
   await mistakeBatch.commit();
 
+  // 2. Ranking logic
   const prevRankSnap = await db.doc(paths.examRank(examId, uid)).get();
-  const previousRank = prevRankSnap.exists
-    ? (prevRankSnap.data()?.rank as number | undefined)
-    : undefined;
+  const previousRank = prevRankSnap.exists ? (prevRankSnap.data()?.rank as number) : undefined;
 
   const ranking = await processIncrementalRanking(db, {
-    examId,
-    exam,
-    uid,
-    resultId,
-    score,
-    maxScore,
+    examId, exam, uid, resultId, score, maxScore,
     submittedAt: ctx.result.submittedAt,
     timeTakenMs: ctx.timeTakenMs,
     correctCount: correct,
@@ -101,33 +93,12 @@ export async function processMcqSubmission(
     previousRank,
   });
 
-  await db.doc(paths.result(resultId)).update({
-    rank: ranking.rank,
-    rankDelta: ranking.rankDelta,
-    percentile: ranking.percentile,
-    maxScore,
-    accuracy: ranking.accuracy,
-    correctCount: correct,
-    wrongCount: wrong,
-    skippedCount: skipped,
-    timeTakenMs: ctx.timeTakenMs,
-    isBestScore: true,
-  });
-
-  await updateGlobalLeaderboardEntry(
-    db,
-    uid,
-    ctx.result.studentProfile?.name ?? "Student",
-    ctx.result.studentProfile?.studentId ?? ""
-  );
-
+  // 3. Gamification (Await this first to get xpEarned)
   const { xpEarned, newBadges } = await applyPostSubmitGamification(db, {
-    uid,
-    examId,
+    uid, examId,
     examTitle: exam.title,
     subject: exam.subject,
-    score,
-    maxScore,
+    score, maxScore,
     percentile: ranking.percentile,
     rank: ranking.rank,
     accuracy: ranking.accuracy,
@@ -138,73 +109,87 @@ export async function processMcqSubmission(
     skippedCount: skipped,
   });
 
-  await createNotification(db, uid, {
-    title: "Exam submitted",
-    message: formatRankMessage(
-      ranking.rank,
-      ranking.participantCount,
-      ranking.percentile
+  // 4. Group all side-effects to run in parallel
+  const sideEffects = [
+    db.doc(paths.result(resultId)).update({
+      rank: ranking.rank,
+      rankDelta: ranking.rankDelta,
+      percentile: ranking.percentile,
+      maxScore,
+      accuracy: ranking.accuracy,
+      correctCount: correct,
+      wrongCount: wrong,
+      skippedCount: skipped,
+      timeTakenMs: ctx.timeTakenMs,
+      isBestScore: true,
+    }),
+    updateGlobalLeaderboardEntry(
+      db, uid,
+      ctx.result.studentProfile?.name ?? "Student",
+      ctx.result.studentProfile?.studentId ?? ""
     ),
-    type: "success",
-    link: `/exam/${examId}`,
-  });
+    recordRankHistory(db, {
+      uid, examId,
+      examTitle: exam.title,
+      subject: exam.subject ?? "General",
+      rank: ranking.rank,
+      previousRank: previousRank ?? null,
+      percentile: ranking.percentile,
+      score, maxScore,
+    }),
+    missionsService.increment(uid, "complete_exam", 1),
+    missionsService.increment(uid, "earn_xp", xpEarned),
+    recordActivity(db, {
+      uid,
+      studentId: ctx.result.studentProfile?.studentId ?? "",
+      name: ctx.result.studentProfile?.name ?? "Student",
+      type: "exam_submit",
+      title: exam.title,
+      message: `Rank #${ranking.rank} · Top ${ranking.percentile}%`,
+    }),
+    // Notifications and Badge Activities
+    (async () => {
+      const notifications = [
+        createNotification(db, uid, {
+          title: "Exam submitted",
+          message: formatRankMessage(ranking.rank, ranking.participantCount, ranking.percentile),
+          type: "success",
+          link: `/exam/${examId}`,
+        })
+      ];
+      if (ranking.rankDelta != null && ranking.rankDelta > 0) {
+        notifications.push(createNotification(db, uid, {
+          title: "Rank improved!",
+          message: `You moved up ${ranking.rankDelta} place(s) to #${ranking.rank}`,
+          type: "success",
+          link: `/exam/${examId}`,
+        }));
+      }
+      if (newBadges.length > 0) {
+        notifications.push(createNotification(db, uid, {
+          title: "Achievement unlocked",
+          message: `You earned: ${newBadges.join(", ")}`,
+          type: "success",
+          link: "/student?tab=achievements",
+        }));
+        for (const badge of newBadges) {
+          notifications.push(recordActivity(db, {
+            uid,
+            studentId: ctx.result.studentProfile?.studentId ?? "",
+            name: ctx.result.studentProfile?.name ?? "Student",
+            type: "achievement",
+            title: "Achievement unlocked",
+            message: badge,
+          }));
+        }
+      }
+      await Promise.all(notifications);
+    })()
+  ];
 
-  if (newBadges.length > 0) {
-    await createNotification(db, uid, {
-      title: "Achievement unlocked",
-      message: `You earned: ${newBadges.join(", ")}`,
-      type: "success",
-      link: "/student?tab=achievements",
-    });
-    for (const badge of newBadges) {
-      await recordActivity(db, {
-        uid,
-        studentId: ctx.result.studentProfile?.studentId ?? "",
-        name: ctx.result.studentProfile?.name ?? "Student",
-        type: "achievement",
-        title: "Achievement unlocked",
-        message: badge,
-      });
-    }
-  }
+  await Promise.all(sideEffects);
 
-  if (ranking.rankDelta != null && ranking.rankDelta > 0) {
-    await createNotification(db, uid, {
-      title: "Rank improved!",
-      message: `You moved up ${ranking.rankDelta} place(s) to #${ranking.rank}`,
-      type: "success",
-      link: `/exam/${examId}`,
-    });
-  }
-
-  await recordRankHistory(db, {
-    uid,
-    examId,
-    examTitle: exam.title,
-    subject: exam.subject ?? "General",
-    rank: ranking.rank,
-    previousRank: previousRank ?? null,
-    percentile: ranking.percentile,
-    score,
-    maxScore,
-  });
-
-  await missionsService.increment(uid, "complete_exam", 1);
-  await missionsService.increment(uid, "earn_xp", xpEarned);
-
-  await recordActivity(db, {
-    uid,
-    studentId: ctx.result.studentProfile?.studentId ?? "",
-    name: ctx.result.studentProfile?.name ?? "Student",
-    type: "exam_submit",
-    title: exam.title,
-    message: `Rank #${ranking.rank} · Top ${ranking.percentile}%`,
-  });
-
-  enqueueJob({
-    type: "analytics.rebuild",
-    payload: { examId },
-  });
+  enqueueJob({ type: "analytics.rebuild", payload: { examId } });
 
   return {
     rank: ranking.rank,

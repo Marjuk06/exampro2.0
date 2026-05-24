@@ -3,7 +3,9 @@ export type JobType =
   | "analytics.rebuild"
   | "notifications.digest"
   | "live_sessions.prune"
-  | "leaderboard.rebuild_period";
+  | "leaderboard.rebuild_period"
+  | "streaks.warn"
+  | "challenges.prune";
 
 export interface JobPayload {
   type: JobType;

@@ -25,7 +25,7 @@ interface McqExamViewProps {
 }
 
 export function McqExamView({ exam, questions, endTime, sessionId }: McqExamViewProps) {
-  const router = useRouter();
+  // router unused, but keeping import for diff simplicity
   const { profile } = useAuth();
   const { answers, bookmarks, setAnswer, toggleBookmark, reset } = useExamStore();
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -68,13 +68,14 @@ export function McqExamView({ exam, questions, endTime, sessionId }: McqExamView
       } else {
         toast.success("Exam submitted successfully!");
       }
-      router.push(`/exam/${exam.id}`);
+      // Force a hard reload so the parent component fetches the new result
+      window.location.reload();
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Submission failed");
     } finally {
       setSubmitting(false);
     }
-  }, [submitting, exam.id, answers, bookmarks, reset, router, startedAt]);
+  }, [submitting, exam.id, answers, bookmarks, reset, startedAt]);
 
   const onExpire = useCallback(() => {
     toast.info("Time's up! Auto-submitting...");
@@ -151,9 +152,9 @@ export function McqExamView({ exam, questions, endTime, sessionId }: McqExamView
   if (!currentQ) return null;
 
   return (
-    <div className="flex w-full max-w-5xl gap-6">
+    <div className="flex w-full max-w-5xl flex-col gap-6 lg:flex-row">
       {/* Sidebar: palette + live ranking */}
-      <div className="flex flex-col gap-4">
+      <div className="flex w-full flex-col gap-4 lg:w-64 lg:shrink-0">
         <QuestionPalette
           questions={orderedQuestions}
           answers={answers}
@@ -179,7 +180,7 @@ export function McqExamView({ exam, questions, endTime, sessionId }: McqExamView
             </Button>
             <ExamTimer endTime={endTime} onExpire={onExpire} />
           </div>
-          <CardContent className="p-8 pr-44">
+          <CardContent className="p-6 pt-16 sm:p-8 sm:pr-44 lg:pt-8">
             <h2 className="text-2xl font-bold">{exam.title}</h2>
             <p className="text-sm text-muted-foreground">
               {exam.subject} · MCQ

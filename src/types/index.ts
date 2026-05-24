@@ -8,6 +8,12 @@ export interface AppSettings {
   tgToken?: string;
   tgChatId?: string;
   maintenanceMode?: boolean;
+  /** Show BETA tag on the app logo across all pages */
+  betaMode?: boolean;
+  /** Show the Under Construction banner at the top of every page */
+  constructionBanner?: boolean;
+  /** Custom message for the construction banner */
+  constructionMessage?: string;
 }
 
 export interface UserProfile {
@@ -77,6 +83,8 @@ export interface Question {
   difficulty?: "easy" | "medium" | "hard";
   tags?: string[];
   points?: number;
+  /** Subject inherited from exam — stored on question for scoped queries */
+  subject?: string;
   createdAt: number;
 }
 

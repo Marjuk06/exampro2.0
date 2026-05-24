@@ -24,7 +24,7 @@ function StudentTabs() {
         <EngagementHub />
       </ErrorBoundary>
       <Tabs defaultValue={defaultTab} key={defaultTab}>
-        <TabsList className="mb-6 flex h-auto flex-wrap gap-1">
+        <TabsList className="mb-6 flex h-auto w-full justify-start overflow-x-auto whitespace-nowrap md:flex-wrap">
           <TabsTrigger value="exams">Exams</TabsTrigger>
           <TabsTrigger value="practice">Practice</TabsTrigger>
           <TabsTrigger value="leaderboard">Leaderboard</TabsTrigger>
@@ -79,8 +79,10 @@ function StudentTabs() {
 
 export default function StudentPage() {
   return (
-    <Suspense fallback={<Skeleton className="h-64 w-full" />}>
-      <StudentTabs />
-    </Suspense>
+    <main> 
+      <Suspense fallback={<Skeleton className="h-64 w-full" />}>
+        <StudentTabs />
+      </Suspense>
+    </main>
   );
 }

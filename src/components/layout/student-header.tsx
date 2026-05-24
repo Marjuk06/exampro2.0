@@ -8,18 +8,27 @@ import { ThemeToggle } from "@/components/layout/theme-toggle";
 import { LogoutButton } from "@/components/layout/logout-button";
 import { NotificationBell } from "@/components/student/notification-bell";
 import { StreakBadge } from "@/components/student/streak-badge";
+import { BetaTag } from "@/components/layout/beta-banner";
 
 export function StudentHeader() {
   const { profile } = useAuth();
 
   return (
-    <header className="glass fixed top-0 z-40 flex w-full items-center justify-between border-b border-white/10 px-4 py-3 sm:px-6 sm:py-4">
+    // 'fixed' header means it stays at the top. 
+    // We add z-50 to ensure it's always on top.
+    <header className="glass fixed top-0 z-50 flex w-full items-center justify-between border-b border-white/10 px-4 py-3 sm:px-6 sm:py-4">
       <Link href="/student" className="flex items-center gap-2 sm:gap-3">
         <div className="rounded-lg bg-blue-600 p-2">
           <Layers className="h-5 w-5 text-white" />
         </div>
-        <h1 className="text-lg font-bold tracking-wider sm:text-xl">Exam Center</h1>
+        <div className="flex flex-col">
+          <div className="flex items-center gap-2">
+            <h1 className="hidden text-lg font-bold tracking-wider sm:block sm:text-xl">Exam Center</h1>
+            <BetaTag />
+          </div>
+        </div>
       </Link>
+      
       <div className="flex items-center gap-1 sm:gap-3">
         <StreakBadge />
         <NotificationBell />

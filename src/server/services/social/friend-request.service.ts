@@ -1,5 +1,4 @@
-import type { Firestore, Timestamp } from "firebase-admin/firestore";
-import { paths } from "@/lib/firebase/paths";
+import type { Firestore } from "firebase-admin/firestore";
 import { createNotification } from "@/server/notifications";
 import { ApiError } from "@/server/api/response";
 import { trackQuery } from "@/server/observability/query-metrics";

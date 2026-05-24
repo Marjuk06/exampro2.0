@@ -47,16 +47,7 @@ export async function createChallenge(
   wagerXp: number,
   type: ChallengeType = "1v1"
 ): Promise<{ challengeId: string }> {
-  // Resolve challenged student
-  const profileSnap = await trackQuery("challenge.resolve_challenged", () =>
-    db
-      .collection(paths.publicProfile("").replace("/", "").split("/").slice(0, -1).join("/"))
-      .where("studentId", "==", challengedStudentId)
-      .limit(1)
-      .get()
-  );
-
-  // Alternative lookup via public_profiles collection using the paths utility
+  // Lookup challenged student via public_profiles collection
   const pubProfilesPath = paths.publicProfile(challengedStudentId)
     .split("/")
     .slice(0, -1)
@@ -248,8 +239,7 @@ export async function submitChallengeAnswers(
     if (winnerId === uid) {
       isWinner = true;
       xpEarned = c.wagerXp;
-      const profileRef = db.doc(`artifacts/${paths.userEngagement(uid).split("/artifacts/")[1] ?? ""}`);
-      // Use the proper path
+      // Award XP via engagement doc
       const engRef = db.doc(paths.userEngagement(uid));
       await engRef.set({ xp: (await engRef.get()).data()?.xp ?? 0 + xpEarned }, { merge: true });
     }

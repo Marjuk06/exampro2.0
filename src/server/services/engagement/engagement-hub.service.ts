@@ -10,27 +10,34 @@ import type { UserProfile } from "@/types";
 
 export async function getEngagementHub(uid: string): Promise<EngagementHubData> {
   const db = getAdminDb();
-  const profileSnap = await db.doc(paths.userProfile(uid)).get();
-  const profile = profileSnap.data() as UserProfile | undefined;
+  
+  const [
+    profileSnap,
+    globalRank,
+    engagementSnap,
+    missions,
+    history,
+    featuredSnap
+  ] = await Promise.all([
+    db.doc(paths.userProfile(uid)).get(),
+    getGlobalRankPosition(uid),
+    db.doc(paths.userEngagement(uid)).get(),
+    missionsService.getMissions(uid),
+    getRankHistory(db, uid, 1),
+    db.doc(paths.featuredExams()).get()
+  ]);
 
+  const profile = profileSnap.data() as UserProfile | undefined;
   const xp = profile?.xp ?? 0;
   const level = profile?.level ?? 1;
   const streak = profile?.streak?.current ?? 0;
   const xpProgress = xpProgressInLevel(xp);
 
-  const globalRank = await getGlobalRankPosition(uid);
-
-  const engagementSnap = await db.doc(paths.userEngagement(uid)).get();
   const engagement = engagementSnap.data() ?? {};
   const today = utcDateKey();
   const lastClaim = (engagement.lastDailyClaim as string | null) ?? null;
   const canClaim = lastClaim !== today;
   const dailyStreak = (engagement.dailyRewardStreak as number) ?? 0;
-
-  const missions = await missionsService.getMissions(uid);
-  const history = await getRankHistory(db, uid, 1);
-
-  const featuredSnap = await db.doc(paths.featuredExams()).get();
   let featuredExams = (featuredSnap.data()?.exams ?? []) as Array<{
     id: string;
     title: string;

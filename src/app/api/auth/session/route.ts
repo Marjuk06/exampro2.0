@@ -74,7 +74,7 @@ export async function POST(request: Request) {
         name: decoded.name ?? decoded.email?.split("@")[0] ?? "Student",
         studentId: generateStudentId(),
         role,
-        avatarUrl: decoded.picture,
+        avatarUrl: decoded.picture ?? "",
         createdAt: now,
         updatedAt: now,
         xp: 0,

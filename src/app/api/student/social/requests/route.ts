@@ -1,5 +1,5 @@
 import { requireAuth } from "@/server/auth/require-auth";
-import { withApiHandler, jsonOk, jsonError, parseJson } from "@/server/api/handler";
+import { withApiHandler, jsonOk, parseJson } from "@/server/api/handler";
 import { getAdminDb } from "@/lib/firebase/admin";
 import { APP_ID } from "@/lib/constants";
 import {

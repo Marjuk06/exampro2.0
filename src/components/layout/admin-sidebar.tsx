@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion } from "framer-motion";
 import {
+  Activity,
   BarChart3,
   Bell,
   BookOpen,
@@ -18,6 +19,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
+import { BetaTag } from "@/components/layout/beta-banner";
 
 const navItems = [
   { href: "/admin", label: "Dashboard", icon: LayoutDashboard, exact: true },
@@ -29,6 +31,7 @@ const navItems = [
   { href: "/admin/results", label: "All Results", icon: Users },
   { href: "/admin/requests", label: "Retake Requests", icon: Bell, badgeKey: "retakes" },
   { href: "/admin/students", label: "Students", icon: ClipboardList },
+  { href: "/admin/diagnostics", label: "Diagnostics", icon: Activity },
   { href: "/admin/settings", label: "Settings", icon: Settings },
 ];
 
@@ -45,7 +48,10 @@ export function AdminSidebar({ counts }: AdminSidebarProps) {
         <div className="rounded-lg bg-purple-600 p-2 shadow-lg">
           <Shield className="h-5 w-5 text-white" />
         </div>
-        <span className="text-xl font-bold tracking-wide">Admin</span>
+        <div className="flex flex-col gap-0.5">
+          <span className="text-xl font-bold tracking-wide">Admin</span>
+          <BetaTag className="self-start" />
+        </div>
       </div>
       <nav className="flex flex-1 flex-col gap-1 overflow-y-auto p-4">
         {navItems.map((item) => {

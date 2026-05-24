@@ -19,7 +19,7 @@ interface CqExamViewProps {
 }
 
 export function CqExamView({ exam, questions, endTime }: CqExamViewProps) {
-  const router = useRouter();
+  // router unused, but keeping import for diff simplicity
   const { reset } = useExamStore();
   const [phase, setPhase] = useState<"writing" | "upload">("writing");
   const [files, setFiles] = useState<File[]>([]);
@@ -45,7 +45,8 @@ export function CqExamView({ exam, questions, endTime }: CqExamViewProps) {
       if (!res.ok) throw new Error("Upload failed");
       reset();
       toast.success("CQ Exam submitted successfully!");
-      router.push(`/exam/${exam.id}`);
+      // Force a hard reload so the parent component fetches the new result
+      window.location.reload();
     } catch {
       toast.error("Save failed. Try smaller images.");
     } finally {

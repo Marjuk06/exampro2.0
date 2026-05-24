@@ -8,6 +8,9 @@ const updateSchema = z.object({
   tgToken: z.string().optional(),
   tgChatId: z.string().optional(),
   maintenanceMode: z.boolean().optional(),
+  betaMode: z.boolean().optional(),
+  constructionBanner: z.boolean().optional(),
+  constructionMessage: z.string().max(300).optional(),
 });
 
 export const GET = withApiHandler(async () => {

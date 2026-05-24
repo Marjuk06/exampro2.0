@@ -54,4 +54,63 @@ export function ensureJobHandlersRegistered(): void {
       await rebuildExamLeaderboard(db, examId, examTitle, subject, maxScore);
     },
   });
+
+  // Phase 4: Warn students whose streak is at risk (no activity today)
+  registerJobHandler({
+    type: "streaks.warn",
+    async run() {
+      const db = getAdminDb();
+      const startOfDay = new Date();
+      startOfDay.setHours(0, 0, 0, 0);
+      const threshold = startOfDay.getTime();
+
+      // Find students with active streaks who haven't practiced today
+      const engSnap = await db
+        .collectionGroup("engagement")
+        .where("streakDays", ">", 0)
+        .where("lastActivityAt", "<", threshold)
+        .limit(500)
+        .get();
+
+      if (engSnap.empty) return;
+
+      const { createNotification } = await import("@/server/notifications");
+      const BATCH_SIZE = 50;
+      for (let i = 0; i < engSnap.docs.length; i += BATCH_SIZE) {
+        const chunk = engSnap.docs.slice(i, i + BATCH_SIZE);
+        await Promise.all(
+          chunk.map((doc) => {
+            const uid = doc.ref.path.split("/users/")[1]?.split("/")[0];
+            if (!uid) return Promise.resolve();
+            const streak = doc.data().streakDays as number;
+            return createNotification(db, uid, {
+              title: "🔥 Streak at risk!",
+              message: `Your ${streak}-day streak ends at midnight. Practice now to keep it alive!`,
+              type: "warning",
+              link: "/student?tab=practice",
+            });
+          })
+        );
+      }
+    },
+  });
+
+  // Phase 4: Prune expired challenges (older than 24h in pending status)
+  registerJobHandler({
+    type: "challenges.prune",
+    async run() {
+      const db = getAdminDb();
+      const snap = await db
+        .collection(paths.challenges())
+        .where("status", "==", "pending")
+        .where("expiresAt", "<=", Date.now())
+        .limit(200)
+        .get();
+      if (snap.empty) return;
+      const batch = db.batch();
+      snap.docs.forEach((d) => batch.update(d.ref, { status: "declined", expiredAt: Date.now() }));
+      await batch.commit();
+    },
+  });
 }
+

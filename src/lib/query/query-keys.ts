@@ -29,5 +29,6 @@ export const queryKeys = {
   liveRanking: (examId: string) => ["exam", "live-ranking", examId] as const,
   notificationPrefs: ["student", "notification-prefs"] as const,
   adminDiagnostics: ["admin", "diagnostics"] as const,
+  publicSettings: ["settings", "public"] as const,
 };
 

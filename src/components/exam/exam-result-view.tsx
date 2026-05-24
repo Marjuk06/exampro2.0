@@ -177,8 +177,8 @@ export function ExamResultView({ exam, result, questions }: ExamResultViewProps)
                 )}
               >
                 <CardContent className="p-6">
-                  <div className="mb-4 flex justify-between">
-                    <h4 className="font-medium">
+                  <div className="mb-4 flex items-start justify-between gap-4">
+                    <h4 className="font-medium whitespace-pre-wrap">
                       <span className="mr-2 text-muted-foreground">Q{i + 1}.</span>
                       {q.text}
                     </h4>

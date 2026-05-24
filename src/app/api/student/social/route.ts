@@ -17,12 +17,20 @@ export const POST = withApiHandler(async (request) => {
   const body = await request.json();
 
   if (body.action === "add") {
-    const conn = await socialService.addConnection(
-      session.uid,
-      body.studentId,
-      body.type ?? "friend"
-    );
-    return jsonOk({ connection: conn });
+    try {
+      const conn = await socialService.addConnection(
+        session.uid,
+        body.studentId,
+        body.type ?? "friend"
+      );
+      return jsonOk({ connection: conn });
+    } catch (e: unknown) {
+      const err = e as Error;
+      if (err.message === "Student not found" || err.message === "Cannot connect to yourself") {
+        return jsonOk({ error: err.message }, 400);
+      }
+      throw e;
+    }
   }
 
   if (body.action === "compare" && body.otherUid) {

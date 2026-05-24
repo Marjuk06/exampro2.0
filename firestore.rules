@@ -173,7 +173,7 @@ service cloud.firestore {
 
     // ——— Exams: read authenticated; write admin API only ———
     match /artifacts/{appId}/public/data/exams/{examId} {
-      allow read: if isSignedIn();
+      allow read: if isSignedIn() && (resource.data.get('isHidden', false) == false || isAdmin());
       allow write: if false;
     }
 

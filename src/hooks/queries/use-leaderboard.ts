@@ -26,6 +26,22 @@ export function useGlobalLeaderboard(period = "alltime", limit = 25) {
   });
 }
 
+import { useInfiniteQuery } from "@tanstack/react-query";
+
+export function useInfiniteGlobalLeaderboard(period = "alltime", limit = 25) {
+  return useInfiniteQuery({
+    queryKey: ["leaderboard", "global", period],
+    queryFn: async ({ pageParam }) => {
+      const cursorParam = pageParam ? `&cursor=${pageParam}` : "";
+      type LEntry = { uid: string; name: string; studentId: string; rank: number; score?: number; percentile?: number; xp: number; level: number; streak: number; avatar?: string; examsCompleted: number; [key: string]: unknown };
+      return fetchJson<{ entries: LEntry[]; myEntry: LEntry | null; nextCursor?: string | null }>(`/api/leaderboard/global?period=${period}&limit=${limit}${cursorParam}`);
+    },
+    initialPageParam: null as string | null,
+    getNextPageParam: (lastPage) => lastPage.nextCursor ?? null,
+    staleTime: 45_000,
+  });
+}
+
 export function useExamLeaderboard(examId: string, enabled = true) {
   return useQuery({
     queryKey: queryKeys.examLeaderboard(examId),

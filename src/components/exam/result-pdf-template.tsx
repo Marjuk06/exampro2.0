@@ -22,77 +22,90 @@ export const ResultPdfTemplate = forwardRef<HTMLDivElement, ResultPdfTemplatePro
       <div
         ref={ref}
         style={{
-          width: "794px",
-          minHeight: "1123px",
+          width: "210mm",
           backgroundColor: "#ffffff",
           color: "#000000",
-          fontFamily: "sans-serif",
-          padding: "40px 50px",
-          position: "relative",
+          fontFamily: "Inter, system-ui, sans-serif",
+          padding: "20mm 15mm",
+          margin: "0 auto",
+          boxSizing: "border-box",
         }}
       >
+        <style>
+          {`
+            @media print {
+              @page {
+                size: A4 portrait;
+                margin: 0;
+              }
+              body {
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+                margin: 0;
+                background: #ffffff;
+              }
+              .no-break {
+                page-break-inside: avoid;
+                break-inside: avoid;
+              }
+            }
+          `}
+        </style>
+
         {/* Header Section */}
-        <div style={{ borderBottom: "2px solid #e5e7eb", paddingBottom: "20px", marginBottom: "30px", display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+        <div style={{ borderBottom: "2px solid #e5e7eb", paddingBottom: "15px", marginBottom: "25px", display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
           <div>
-            <h1 style={{ fontSize: "32px", fontWeight: "bold", margin: 0, color: "#1e3a8a" }}>{exam.title}</h1>
-            <p style={{ fontSize: "14px", color: "#6b7280", marginTop: "4px" }}>Official Exam Result & Performance Report</p>
+            <h1 style={{ fontSize: "28px", fontWeight: "bold", margin: 0, color: "#1e3a8a", lineHeight: 1.2 }}>{exam.title}</h1>
+            <p style={{ fontSize: "14px", color: "#6b7280", marginTop: "4px", margin: 0 }}>Official Exam Result & Performance Report</p>
           </div>
           <div style={{ textAlign: "right" }}>
-            <div style={{ fontSize: "24px", fontWeight: "bold", color: "#111827" }}>MCQ Pro</div>
-            <p style={{ fontSize: "12px", color: "#6b7280", marginTop: "2px" }}>Exam Center Hub</p>
+            <div style={{ fontSize: "20px", fontWeight: "900", color: "#111827", letterSpacing: "-0.5px" }}>MCQ Pro</div>
+            <p style={{ fontSize: "12px", color: "#6b7280", margin: 0 }}>Exam Center Hub</p>
           </div>
         </div>
 
         {/* Summary Cards */}
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "20px", marginBottom: "40px" }}>
-          <div style={{ padding: "20px", borderRadius: "12px", backgroundColor: "#f3f4f6", border: "1px solid #e5e7eb" }}>
-            <h3 style={{ margin: "0 0 10px 0", fontSize: "16px", color: "#374151" }}>Student Information</h3>
-            <p style={{ margin: "4px 0", fontSize: "18px", fontWeight: "bold" }}>{result.studentProfile?.name || "Unknown Student"}</p>
-            <p style={{ margin: "4px 0", fontSize: "14px" }}>ID: {result.studentProfile?.studentId || "—"}</p>
-            <p style={{ margin: "4px 0", fontSize: "14px" }}>Submitted: {new Date(submittedAt).toLocaleString()}</p>
+          {/* Student Info */}
+          <div style={{ padding: "16px", borderRadius: "8px", backgroundColor: "#f9fafb", border: "1px solid #e5e7eb" }}>
+            <h3 style={{ margin: "0 0 12px 0", fontSize: "14px", color: "#6b7280", textTransform: "uppercase", letterSpacing: "0.5px" }}>Candidate Information</h3>
+            <p style={{ margin: "4px 0", fontSize: "20px", fontWeight: "bold", color: "#111827" }}>{result.studentProfile?.name || "Unknown Student"}</p>
+            <p style={{ margin: "4px 0", fontSize: "14px", color: "#4b5563" }}>ID: {result.studentProfile?.studentId || "—"}</p>
+            <p style={{ margin: "4px 0", fontSize: "14px", color: "#4b5563" }}>Date: {new Date(submittedAt).toLocaleString()}</p>
           </div>
 
-          <div style={{ padding: "20px", borderRadius: "12px", backgroundColor: "#eff6ff", border: "1px solid #bfdbfe" }}>
-            <h3 style={{ margin: "0 0 10px 0", fontSize: "16px", color: "#1d4ed8" }}>Performance Summary</h3>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
+          {/* Performance Info */}
+          <div style={{ padding: "16px", borderRadius: "8px", backgroundColor: "#eff6ff", border: "1px solid #bfdbfe" }}>
+            <h3 style={{ margin: "0 0 12px 0", fontSize: "14px", color: "#1d4ed8", textTransform: "uppercase", letterSpacing: "0.5px" }}>Performance Summary</h3>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
               <div>
-                <p style={{ margin: 0, fontSize: "12px", color: "#3b82f6" }}>Score</p>
-                <p style={{ margin: 0, fontSize: "20px", fontWeight: "bold" }}>{scoreText}</p>
+                <p style={{ margin: 0, fontSize: "12px", color: "#3b82f6" }}>Final Score</p>
+                <p style={{ margin: 0, fontSize: "22px", fontWeight: "bold", color: "#1e40af" }}>{scoreText}</p>
               </div>
               <div>
                 <p style={{ margin: 0, fontSize: "12px", color: "#3b82f6" }}>Accuracy</p>
-                <p style={{ margin: 0, fontSize: "20px", fontWeight: "bold" }}>{pct}%</p>
+                <p style={{ margin: 0, fontSize: "22px", fontWeight: "bold", color: "#1e40af" }}>{pct}%</p>
+              </div>
+              <div>
+                <p style={{ margin: 0, fontSize: "12px", color: "#3b82f6" }}>Time Spent</p>
+                <p style={{ margin: 0, fontSize: "16px", fontWeight: "bold", color: "#1e3a8a" }}>{minutes}m {seconds}s</p>
               </div>
               {result.rank && (
                 <div>
                   <p style={{ margin: 0, fontSize: "12px", color: "#3b82f6" }}>Rank</p>
-                  <p style={{ margin: 0, fontSize: "20px", fontWeight: "bold" }}>#{result.rank}</p>
+                  <p style={{ margin: 0, fontSize: "16px", fontWeight: "bold", color: "#1e3a8a" }}>#{result.rank}</p>
                 </div>
               )}
-              {result.percentile && (
-                <div>
-                  <p style={{ margin: 0, fontSize: "12px", color: "#3b82f6" }}>Percentile</p>
-                  <p style={{ margin: 0, fontSize: "20px", fontWeight: "bold" }}>Top {result.percentile}%</p>
-                </div>
-              )}
-              <div>
-                <p style={{ margin: 0, fontSize: "12px", color: "#3b82f6" }}>Time Spent</p>
-                <p style={{ margin: 0, fontSize: "16px", fontWeight: "bold" }}>{minutes}m {seconds}s</p>
-              </div>
-              <div>
-                <p style={{ margin: 0, fontSize: "12px", color: "#3b82f6" }}>XP Earned</p>
-                <p style={{ margin: 0, fontSize: "16px", fontWeight: "bold", color: "#8b5cf6" }}>+{result.score} XP</p>
-              </div>
             </div>
           </div>
         </div>
 
         {/* Questions Detail */}
-        <h2 style={{ fontSize: "22px", borderBottom: "2px solid #e5e7eb", paddingBottom: "10px", marginBottom: "20px", color: "#111827" }}>
-          Detailed Review
+        <h2 style={{ fontSize: "20px", borderBottom: "2px solid #e5e7eb", paddingBottom: "8px", marginBottom: "20px", color: "#111827" }}>
+          Answer Sheet & Detailed Review
         </h2>
 
-        <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
+        <div style={{ display: "block" }}>
           {questions.map((q, i) => {
             const studentAns = result.answers?.[q.id];
             
@@ -101,13 +114,13 @@ export const ResultPdfTemplate = forwardRef<HTMLDivElement, ResultPdfTemplatePro
               const mark = ansObj?.mark ?? null;
               const comment = ansObj?.comment ?? null;
               return (
-                <div key={q.id} style={{ padding: "16px", border: "1px solid #e5e7eb", borderRadius: "8px", pageBreakInside: "avoid" }}>
-                  <p style={{ margin: "0 0 12px 0", fontSize: "16px", fontWeight: "bold" }}>
-                    <span style={{ color: "#3b82f6", marginRight: "8px" }}>Q{i + 1}.</span> {q.text}
+                <div key={q.id} className="no-break" style={{ padding: "16px", border: "1px solid #e5e7eb", borderRadius: "8px", backgroundColor: "#ffffff", marginBottom: "20px", pageBreakInside: "avoid" }}>
+                  <p style={{ margin: "0 0 12px 0", fontSize: "15px", fontWeight: "600", color: "#111827", lineHeight: 1.5 }}>
+                    <span style={{ color: "#3b82f6", marginRight: "6px" }}>Q{i + 1}.</span> {q.text}
                   </p>
-                  <div style={{ marginTop: "12px", padding: "12px", backgroundColor: "#f9fafb", borderRadius: "6px" }}>
-                    <p style={{ margin: 0, fontSize: "14px", fontWeight: "bold" }}>Marks Awarded: {mark ?? "Pending"}</p>
-                    {comment && <p style={{ margin: "8px 0 0 0", fontSize: "14px", fontStyle: "italic", color: "#4b5563" }}>Evaluator Comment: {comment}</p>}
+                  <div style={{ marginTop: "12px", padding: "12px", backgroundColor: "#f9fafb", borderRadius: "6px", border: "1px solid #f3f4f6" }}>
+                    <p style={{ margin: 0, fontSize: "14px", fontWeight: "bold", color: "#374151" }}>Marks Awarded: {mark ?? "Pending"}</p>
+                    {comment && <p style={{ margin: "8px 0 0 0", fontSize: "14px", fontStyle: "italic", color: "#6b7280" }}>Evaluator Comment: {comment}</p>}
                   </div>
                 </div>
               );
@@ -116,49 +129,62 @@ export const ResultPdfTemplate = forwardRef<HTMLDivElement, ResultPdfTemplatePro
             // MCQ Logic
             const isCorrect = studentAns === q.correctIndex;
             const isSkipped = studentAns === undefined;
-            const statusColor = isCorrect ? "#10b981" : isSkipped ? "#6b7280" : "#ef4444";
-            const statusText = isCorrect ? "Correct" : isSkipped ? "Skipped" : "Wrong";
+            const statusColor = isCorrect ? "#059669" : isSkipped ? "#6b7280" : "#dc2626";
+            const statusText = isCorrect ? "Correct" : isSkipped ? "Skipped" : "Incorrect";
             const statusBg = isCorrect ? "#ecfdf5" : isSkipped ? "#f3f4f6" : "#fef2f2";
+            const statusBorder = isCorrect ? "#a7f3d0" : isSkipped ? "#e5e7eb" : "#fecaca";
 
             return (
-              <div key={q.id} style={{ padding: "20px", border: `1px solid ${isCorrect ? "#a7f3d0" : isSkipped ? "#e5e7eb" : "#fecaca"}`, backgroundColor: statusBg, borderRadius: "12px", pageBreakInside: "avoid" }}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "16px" }}>
-                  <p style={{ margin: 0, fontSize: "16px", fontWeight: "bold", flex: 1 }}>
-                    <span style={{ color: "#3b82f6", marginRight: "8px" }}>Q{i + 1}.</span> {q.text}
+              <div key={q.id} className="no-break" style={{ padding: "16px", border: `1px solid ${statusBorder}`, backgroundColor: statusBg, borderRadius: "8px", marginBottom: "20px", pageBreakInside: "avoid" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "16px", gap: "12px" }}>
+                  <p style={{ margin: 0, fontSize: "15px", fontWeight: "600", color: "#111827", flex: 1, lineHeight: 1.5 }}>
+                    <span style={{ color: "#3b82f6", marginRight: "6px" }}>Q{i + 1}.</span> {q.text}
                   </p>
-                  <span style={{ padding: "4px 10px", borderRadius: "100px", fontSize: "12px", fontWeight: "bold", backgroundColor: statusColor, color: "#fff", marginLeft: "16px" }}>
+                  <span style={{ padding: "4px 10px", borderRadius: "6px", fontSize: "12px", fontWeight: "bold", backgroundColor: statusColor, color: "#fff", whiteSpace: "nowrap" }}>
                     {statusText}
                   </span>
                 </div>
 
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px", marginTop: "12px" }}>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: "8px", marginTop: "12px" }}>
                   {q.options?.map((opt, optIdx) => {
                     const isStudentChoice = studentAns === optIdx;
                     const isActualCorrect = q.correctIndex === optIdx;
                     
-                    const optStyle = { padding: "10px", borderRadius: "8px", border: "1px solid #e5e7eb", backgroundColor: "#ffffff", fontSize: "14px" };
+                    const optStyle = { 
+                      padding: "10px 12px", 
+                      borderRadius: "6px", 
+                      border: "1px solid #e5e7eb", 
+                      backgroundColor: "#ffffff", 
+                      fontSize: "14px",
+                      color: "#374151",
+                      display: "flex",
+                      alignItems: "center"
+                    };
                     
                     if (isActualCorrect) {
-                      optStyle.border = "2px solid #10b981";
-                      optStyle.backgroundColor = "#ecfdf5";
+                      optStyle.border = "1px solid #059669";
+                      optStyle.backgroundColor = "#d1fae5";
+                      optStyle.color = "#064e3b";
                     } else if (isStudentChoice && !isActualCorrect) {
-                      optStyle.border = "2px solid #ef4444";
-                      optStyle.backgroundColor = "#fef2f2";
+                      optStyle.border = "1px solid #dc2626";
+                      optStyle.backgroundColor = "#fee2e2";
+                      optStyle.color = "#7f1d1d";
                     }
 
                     return (
                       <div key={optIdx} style={optStyle}>
-                        <strong style={{ marginRight: "8px" }}>{String.fromCharCode(65 + optIdx)}.</strong> {opt}
-                        {isStudentChoice && <span style={{ marginLeft: "8px", fontSize: "12px", color: isActualCorrect ? "#10b981" : "#ef4444" }}>(Your Answer)</span>}
-                        {isActualCorrect && !isStudentChoice && <span style={{ marginLeft: "8px", fontSize: "12px", color: "#10b981" }}>(Correct)</span>}
+                        <strong style={{ marginRight: "10px", color: isActualCorrect ? "#059669" : isStudentChoice ? "#dc2626" : "#6b7280" }}>{String.fromCharCode(65 + optIdx)}.</strong> 
+                        <span style={{ flex: 1 }}>{opt}</span>
+                        {isStudentChoice && <span style={{ marginLeft: "8px", fontSize: "11px", fontWeight: "bold", color: isActualCorrect ? "#059669" : "#dc2626" }}>{isActualCorrect ? "✓ Your Answer" : "✗ Your Answer"}</span>}
+                        {isActualCorrect && !isStudentChoice && <span style={{ marginLeft: "8px", fontSize: "11px", fontWeight: "bold", color: "#059669" }}>✓ Correct Answer</span>}
                       </div>
                     );
                   })}
                 </div>
 
                 {q.explanation && (
-                  <div style={{ marginTop: "16px", padding: "12px", backgroundColor: "rgba(255,255,255,0.6)", borderRadius: "8px", fontSize: "13px", color: "#4b5563" }}>
-                    <strong>Explanation:</strong> {q.explanation}
+                  <div style={{ marginTop: "16px", padding: "12px", backgroundColor: "rgba(255,255,255,0.7)", borderRadius: "6px", fontSize: "13px", color: "#4b5563", border: "1px dashed #d1d5db" }}>
+                    <strong style={{ color: "#374151" }}>Explanation:</strong> {q.explanation}
                   </div>
                 )}
               </div>
@@ -167,7 +193,7 @@ export const ResultPdfTemplate = forwardRef<HTMLDivElement, ResultPdfTemplatePro
         </div>
 
         {/* Footer */}
-        <div style={{ marginTop: "40px", paddingTop: "20px", borderTop: "1px solid #e5e7eb", textAlign: "center", fontSize: "12px", color: "#9ca3af", paddingBottom: "20px" }}>
+        <div style={{ marginTop: "40px", paddingTop: "20px", borderTop: "1px solid #e5e7eb", textAlign: "center", fontSize: "12px", color: "#9ca3af" }}>
           Generated by MCQ Pro Online Exam Center • {new Date().toLocaleDateString()}
         </div>
       </div>

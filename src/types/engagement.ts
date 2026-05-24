@@ -157,6 +157,7 @@ export interface ActivityFeedItem {
     | "challenge";
   title: string;
   message: string;
+  actionLink?: string;
   createdAt: number;
 }
 

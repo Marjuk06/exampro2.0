@@ -6,32 +6,60 @@ import { rateLimit } from "@/lib/api/rate-limit";
 import { MAX_CQ_IMAGES } from "@/lib/constants";
 import { optimizeImageBuffer } from "@/lib/media/optimize-image";
 
-export async function POST(request: Request) {
-  const session = await getServerSession();
-  if (!session) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+import { requireAuth } from "@/server/auth/require-auth";
+import { jsonOk, withApiHandler } from "@/server/api/handler";
+import { ApiError } from "@/server/api/response";
+import { RETAKE_COOLDOWN_HOURS } from "@/lib/constants";
+import type { Exam } from "@/types";
 
-  const rl = await rateLimit(`cq:${session.uid}`);
-  if (!rl.ok) {
-    return NextResponse.json({ error: "Too many requests" }, { status: 429 });
-  }
+export const POST = withApiHandler(async (request) => {
+  const session = await requireAuth();
 
   const formData = await request.formData();
   const examId = formData.get("examId") as string;
   if (!examId) {
-    return NextResponse.json({ error: "examId required" }, { status: 400 });
+    throw new ApiError(400, "examId required");
   }
 
   const files = formData.getAll("images") as File[];
   if (!files.length) {
-    return NextResponse.json({ error: "No images" }, { status: 400 });
+    throw new ApiError(400, "No images");
   }
   if (files.length > MAX_CQ_IMAGES) {
-    return NextResponse.json({ error: `Max ${MAX_CQ_IMAGES} images` }, { status: 400 });
+    throw new ApiError(400, `Max ${MAX_CQ_IMAGES} images`);
   }
 
   const db = getAdminDb();
+  
+  const examSnap = await db.doc(paths.exam(examId)).get();
+  if (!examSnap.exists) {
+    throw new ApiError(404, "Exam not found");
+  }
+  const exam = { id: examSnap.id, ...examSnap.data() } as Exam;
+
+  const existing = await db
+    .collection(paths.results())
+    .where("uid", "==", session.uid)
+    .where("examId", "==", examId)
+    .limit(1)
+    .get();
+
+  const attemptRef = db.doc(paths.userExamAttempts(session.uid, examId));
+  const attemptSnap = await attemptRef.get();
+  const currentAttempts = attemptSnap.data()?.count ?? 0;
+  const lastSubmittedAt = attemptSnap.data()?.lastSubmittedAt ?? 0;
+  const attemptNumber = currentAttempts + 1;
+
+  if (!existing.empty) {
+    if (!exam.allowRetakes || currentAttempts >= (exam.maxRetakes ?? 1)) {
+      throw new ApiError(409, "Already submitted or max retakes reached");
+    }
+    const cooldownMs = RETAKE_COOLDOWN_HOURS * 60 * 60 * 1000;
+    if (Date.now() - lastSubmittedAt < cooldownMs) {
+      throw new ApiError(429, `Please wait ${RETAKE_COOLDOWN_HOURS} hours between retake attempts.`);
+    }
+  }
+
   const bucket = getAdminStorage().bucket();
   const imageUrls: string[] = [];
 
@@ -63,6 +91,11 @@ export async function POST(request: Request) {
   const profile = profileSnap.data();
   const sessionId = `${session.uid}_${examId}`;
 
+  await attemptRef.set(
+    { count: attemptNumber, lastSubmittedAt: Date.now() },
+    { merge: true }
+  );
+
   await db.collection(paths.results()).add({
     uid: session.uid,
     examId,
@@ -75,9 +108,10 @@ export async function POST(request: Request) {
     cqImageUrls: imageUrls,
     score: "Pending",
     submittedAt: Date.now(),
+    attemptNumber,
   });
 
   await db.doc(paths.liveSession(sessionId)).delete().catch(() => {});
 
-  return NextResponse.json({ ok: true, imageCount: imageUrls.length });
-}
+  return jsonOk({ ok: true, imageCount: imageUrls.length });
+}, { rateLimitKey: (req) => `cq:${req.headers.get("x-forwarded-for") || "unknown"}` });

@@ -54,9 +54,9 @@ export function ExamDashboard() {
       ) : (
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
           {visible.map((exam, i) => {
-            const myResult = results.find(
-              (r) => r.uid === profile.uid && r.examId === exam.id
-            );
+            const myResults = results.filter((r) => r.uid === profile.uid && r.examId === exam.id);
+            myResults.sort((a, b) => (b.attemptNumber ?? 1) - (a.attemptNumber ?? 1));
+            const myResult = myResults[0];
             const qCount = questionCounts[exam.id] ?? 0;
             const hasOverride = exam.approvedUsers?.includes(profile.uid);
             const status = now
@@ -239,6 +239,26 @@ function ExamActionButton({
     return <RetakeRequestButton examId={exam.id} examTitle={exam.title} />;
   }
 
+  const attemptNumber = myResult?.attemptNumber ?? 1;
+  const canRetake = myResult && exam.allowRetakes && attemptNumber < (exam.maxRetakes ?? 1);
+
+  if (canRetake) {
+    return (
+      <div className="flex flex-col gap-2 w-full">
+        <Link href={`/exam/${exam.id}/result/${myResult.id}`} className="w-full">
+          <Button variant="outline" className="w-full">
+            <Lock className="mr-2 h-4 w-4" /> View Result
+          </Button>
+        </Link>
+        <Link href={`/exam/${exam.id}`} className="w-full">
+          <Button variant="default" className="w-full bg-blue-600 hover:bg-blue-700">
+            <Play className="mr-2 h-4 w-4" /> Retake Exam ({attemptNumber}/{exam.maxRetakes ?? 1})
+          </Button>
+        </Link>
+      </div>
+    );
+  }
+
   const label = myResult
     ? "View Result"
     : hasOverride
@@ -246,7 +266,7 @@ function ExamActionButton({
       : "Start Exam";
 
   return (
-    <Link href={`/exam/${exam.id}`} className="w-full">
+    <Link href={myResult ? `/exam/${exam.id}/result/${myResult.id}` : `/exam/${exam.id}`} className="w-full">
       <Button
         variant={myResult ? "outline" : "default"}
         className="w-full"

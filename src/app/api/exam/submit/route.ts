@@ -1,28 +1,22 @@
-import { NextResponse } from "next/server";
-import { getServerSession } from "@/lib/auth/session";
-import { getAdminDb } from "@/lib/firebase/admin";
 import { paths } from "@/lib/firebase/paths";
+import { getAdminDb } from "@/lib/firebase/admin";
 import { submitMcqSchema } from "@/lib/validations/exam";
 import { calculateMcqScore } from "@/lib/exam/scoring";
-import { rateLimit } from "@/server/security/rate-limit";
 import { processMcqSubmission } from "@/server/post-submit";
+import { RETAKE_COOLDOWN_HOURS } from "@/lib/constants";
 import type { Exam, Question, ExamResult } from "@/types";
 
-export async function POST(request: Request) {
-  const session = await getServerSession();
-  if (!session) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+import { requireAuth } from "@/server/auth/require-auth";
+import { jsonOk, withApiHandler } from "@/server/api/handler";
+import { ApiError } from "@/server/api/response";
 
-  const rl = await rateLimit(`submit:${session.uid}`);
-  if (!rl.ok) {
-    return NextResponse.json({ error: "Too many requests" }, { status: 429 });
-  }
+export const POST = withApiHandler(async (request) => {
+  const session = await requireAuth();
 
   const body = await request.json();
   const parsed = submitMcqSchema.safeParse(body);
   if (!parsed.success) {
-    return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
+    throw new ApiError(400, "Validation failed");
   }
 
   const { examId, answers, bookmarks, violationCount, timeTakenMs, startedAt } =
@@ -31,7 +25,7 @@ export async function POST(request: Request) {
 
   const examSnap = await db.doc(paths.exam(examId)).get();
   if (!examSnap.exists) {
-    return NextResponse.json({ error: "Exam not found" }, { status: 404 });
+    throw new ApiError(404, "Exam not found");
   }
   const exam = { id: examSnap.id, ...examSnap.data() } as Exam;
 
@@ -42,8 +36,20 @@ export async function POST(request: Request) {
     .limit(1)
     .get();
 
+  const attemptRef = db.doc(paths.userExamAttempts(session.uid, examId));
+  const attemptSnap = await attemptRef.get();
+  const currentAttempts = attemptSnap.data()?.count ?? 0;
+  const lastSubmittedAt = attemptSnap.data()?.lastSubmittedAt ?? 0;
+  const attemptNumber = currentAttempts + 1;
+
   if (!existing.empty) {
-    return NextResponse.json({ error: "Already submitted" }, { status: 409 });
+    if (!exam.allowRetakes || currentAttempts >= (exam.maxRetakes ?? 1)) {
+      throw new ApiError(409, "Already submitted or max retakes reached");
+    }
+    const cooldownMs = RETAKE_COOLDOWN_HOURS * 60 * 60 * 1000;
+    if (Date.now() - lastSubmittedAt < cooldownMs) {
+      throw new ApiError(429, `Please wait ${RETAKE_COOLDOWN_HOURS} hours between retake attempts.`);
+    }
   }
 
   const sessionId = `${session.uid}_${examId}`;
@@ -52,7 +58,7 @@ export async function POST(request: Request) {
   if (liveSnap.exists) {
     const live = liveSnap.data();
     if (live?.endTime && Date.now() > live.endTime + 60_000) {
-      return NextResponse.json({ error: "Time expired" }, { status: 403 });
+      throw new ApiError(403, "Time expired");
     }
     if (!resolvedTimeTakenMs && live?.startTime) {
       resolvedTimeTakenMs = Math.max(0, Date.now() - live.startTime);
@@ -79,9 +85,6 @@ export async function POST(request: Request) {
   const profileSnap = await db.doc(paths.userProfile(session.uid)).get();
   const profile = profileSnap.data();
 
-  const attemptRef = db.doc(paths.userExamAttempts(session.uid, examId));
-  const attemptSnap = await attemptRef.get();
-  const attemptNumber = (attemptSnap.data()?.count ?? 0) + 1;
   await attemptRef.set(
     { count: attemptNumber, lastSubmittedAt: Date.now() },
     { merge: true }
@@ -130,7 +133,7 @@ export async function POST(request: Request) {
     console.error("[submit] post-processing failed:", e);
   }
 
-  return NextResponse.json({
+  return jsonOk({
     resultId: resultRef.id,
     score,
     maxScore,
@@ -140,4 +143,4 @@ export async function POST(request: Request) {
     xpEarned: ranking.xpEarned,
     rankDelta: ranking.rankDelta,
   });
-}
+}, { rateLimitKey: (req) => `submit:${req.headers.get("x-forwarded-for") || "unknown"}` });

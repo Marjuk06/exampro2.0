@@ -48,6 +48,8 @@ export function ExamForm({ exam, onSuccess }: ExamFormProps) {
           negativeMarking: exam.negativeMarking ?? 0,
           proctoringEnabled: exam.proctoringEnabled ?? true,
           maxViolations: exam.maxViolations ?? 5,
+          allowRetakes: exam.allowRetakes ?? false,
+          maxRetakes: exam.maxRetakes ?? 1,
         }
       : {
           title: "",
@@ -61,10 +63,13 @@ export function ExamForm({ exam, onSuccess }: ExamFormProps) {
           negativeMarking: 0,
           proctoringEnabled: true,
           maxViolations: 5,
+          allowRetakes: false,
+          maxRetakes: 1,
         },
   });
 
   const isUnlimited = form.watch("isUnlimited");
+  const allowRetakes = form.watch("allowRetakes");
 
   async function onSubmit(data: ExamFormValues) {
     try {
@@ -169,6 +174,19 @@ export function ExamForm({ exam, onSuccess }: ExamFormProps) {
               />
               Proctoring
             </label>
+            <label className="flex items-center gap-2 text-sm">
+              <Switch
+                checked={allowRetakes}
+                onCheckedChange={(c) => form.setValue("allowRetakes", c)}
+              />
+              Allow Retakes
+            </label>
+            {allowRetakes && (
+              <div className="flex items-center gap-2 text-sm">
+                <Label>Max Retakes</Label>
+                <Input type="number" className="w-20" {...form.register("maxRetakes")} />
+              </div>
+            )}
           </div>
           <div>
             <Label>Allowed Student IDs (comma-separated)</Label>

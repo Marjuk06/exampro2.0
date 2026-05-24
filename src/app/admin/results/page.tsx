@@ -32,6 +32,9 @@ import { ClientDate } from "@/components/ui/client-date";
 
 export default function AdminResultsPage() {
   const [filter, setFilter] = useState("all");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [sortOrder, setSortOrder] = useState<"latest" | "highest">("latest");
+  
   const {
     data,
     isLoading,
@@ -45,12 +48,32 @@ export default function AdminResultsPage() {
     [orderBy("createdAt", "desc"), limit(100)]
   );
 
-  const results = useMemo(
+  const rawResults = useMemo(
     () => data?.pages.flatMap((p) => p.items) ?? [],
     [data]
   );
 
   const examList = exams.map((e) => ({ id: e.id, title: e.title ?? "Unknown" }));
+
+  const results = useMemo(() => {
+    let filtered = [...rawResults];
+    if (searchQuery) {
+      const q = searchQuery.toLowerCase();
+      filtered = filtered.filter((r) => {
+        const profile = normalizeStudentProfile(r.studentProfile);
+        const title = getExamTitle(examList, r.examId).toLowerCase();
+        return (
+          profile.name.toLowerCase().includes(q) ||
+          profile.studentId.toLowerCase().includes(q) ||
+          title.includes(q)
+        );
+      });
+    }
+    if (sortOrder === "highest") {
+      filtered.sort((a, b) => Number(b.score) - Number(a.score));
+    }
+    return filtered;
+  }, [rawResults, searchQuery, sortOrder, examList]);
 
   const [isExporting, setIsExporting] = useState(false);
   const [progressText, setProgressText] = useState("");
@@ -130,6 +153,13 @@ export default function AdminResultsPage() {
       <div className="mb-6 flex flex-wrap justify-between gap-3 items-center">
         <h2 className="text-2xl font-bold">All Results Archive</h2>
         <div className="flex flex-wrap gap-3 items-center">
+          <input
+            type="text"
+            placeholder="Search student or exam..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="rounded-md border border-white/10 bg-white/5 px-3 py-2 text-sm w-48"
+          />
           <Select value={filter} onValueChange={setFilter}>
             <SelectTrigger className="w-48">
               <SelectValue placeholder="All Exams" />
@@ -141,6 +171,15 @@ export default function AdminResultsPage() {
                   {e.title}
                 </SelectItem>
               ))}
+            </SelectContent>
+          </Select>
+          <Select value={sortOrder} onValueChange={(val: "latest" | "highest") => setSortOrder(val)}>
+            <SelectTrigger className="w-36">
+              <SelectValue placeholder="Sort by" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="latest">Latest First</SelectItem>
+              <SelectItem value="highest">Highest Score</SelectItem>
             </SelectContent>
           </Select>
 

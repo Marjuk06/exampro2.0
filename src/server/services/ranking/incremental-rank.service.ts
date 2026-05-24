@@ -56,6 +56,7 @@ async function countRankPosition(
   db: Firestore,
   examId: string,
   score: number,
+  timeTakenMs: number,
   submittedAt: number
 ): Promise<number> {
   const resultsCol = db.collection(paths.results());
@@ -67,15 +68,24 @@ async function countRankPosition(
     .get();
   const higher = higherSnap.data().count;
 
-  const tieSnap = await resultsCol
+  const fasterTieSnap = await resultsCol
     .where("examId", "==", examId)
     .where("score", "==", score)
+    .where("timeTakenMs", "<", timeTakenMs)
+    .count()
+    .get();
+  const fasterTies = fasterTieSnap.data().count;
+
+  const exactTieSnap = await resultsCol
+    .where("examId", "==", examId)
+    .where("score", "==", score)
+    .where("timeTakenMs", "==", timeTakenMs)
     .where("submittedAt", "<", submittedAt)
     .count()
     .get();
-  const ties = tieSnap.data().count;
+  const exactTies = exactTieSnap.data().count;
 
-  return higher + ties + 1;
+  return higher + fasterTies + exactTies + 1;
 }
 
 function mergeIntoTopN(
@@ -160,7 +170,7 @@ export async function processIncrementalRanking(
       maxScore
     );
 
-    const rank = await countRankPosition(db, examId, score, submittedAt);
+    const rank = await countRankPosition(db, examId, score, timeTakenMs, submittedAt);
     const percentile =
       participantCount > 1
         ? Math.round(((participantCount - rank) / (participantCount - 1)) * 1000) / 10

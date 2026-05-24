@@ -9,19 +9,20 @@ export interface FriendRequest {
   fromName: string;
   fromStudentId: string;
   to: string;
+  toName: string;
   toStudentId: string;
   status: "pending" | "accepted" | "rejected";
   createdAt: number;
 }
 
-const COL = "friend_requests";
+import { paths } from "@/lib/firebase/paths";
 
-function friendRequestPath(appId: string, reqId: string): string {
-  return `artifacts/${appId}/public/data/${COL}/${reqId}`;
+function friendRequestPath(reqId: string): string {
+  return paths.friendRequest(reqId);
 }
 
-function friendRequestsCollection(appId: string): string {
-  return `artifacts/${appId}/public/data/${COL}`;
+function friendRequestsCollection(): string {
+  return paths.friendRequests();
 }
 
 /**
@@ -39,7 +40,7 @@ export async function sendFriendRequest(
   // Resolve recipient by studentId via their public profile
   const profileSnap = await trackQuery("friend_request.resolve_recipient", () =>
     db
-      .collection(`artifacts/${appId}/public/data/public_profiles`)
+      .collectionGroup("public_profiles")
       .where("studentId", "==", toStudentId)
       .limit(1)
       .get()
@@ -47,13 +48,14 @@ export async function sendFriendRequest(
   if (profileSnap.empty) throw new ApiError(404, "Student not found");
   const toProfile = profileSnap.docs[0]!.data();
   const toUid = toProfile.uid as string;
+  const toName = (toProfile.name as string) ?? toStudentId;
   if (toUid === fromUid) throw new ApiError(400, "Cannot send request to yourself");
 
   // Check for existing pending request in either direction
   const [existingSnap] = await trackQuery("friend_request.check_existing", () =>
     Promise.all([
       db
-        .collection(friendRequestsCollection(appId))
+        .collection(friendRequestsCollection())
         .where("from", "==", fromUid)
         .where("to", "==", toUid)
         .where("status", "==", "pending")
@@ -63,12 +65,13 @@ export async function sendFriendRequest(
   );
   if (!existingSnap.empty) throw new ApiError(409, "Request already pending");
 
-  const ref = db.collection(friendRequestsCollection(appId)).doc();
+  const ref = db.collection(friendRequestsCollection()).doc();
   await ref.set({
     from: fromUid,
     fromName,
     fromStudentId,
     to: toUid,
+    toName,
     toStudentId,
     status: "pending",
     createdAt: Date.now(),
@@ -96,7 +99,7 @@ export async function respondToFriendRequest(
   uid: string,
   action: "accept" | "reject"
 ): Promise<void> {
-  const reqRef = db.doc(friendRequestPath(appId, reqId));
+  const reqRef = db.doc(friendRequestPath(reqId));
   const reqSnap = await reqRef.get();
   if (!reqSnap.exists) throw new ApiError(404, "Request not found");
   const req = reqSnap.data() as FriendRequest;
@@ -108,11 +111,11 @@ export async function respondToFriendRequest(
 
   if (action === "accept") {
     // Bidirectional connection
-    const aConn = db.doc(`artifacts/${appId}/users/${uid}/connections/${req.from}`);
-    const bConn = db.doc(`artifacts/${appId}/users/${req.from}/connections/${uid}`);
+    const aConn = db.doc(paths.userConnection(uid, req.from));
+    const bConn = db.doc(paths.userConnection(req.from, uid));
     const now = Date.now();
     batch.set(aConn, { uid: req.from, studentId: req.fromStudentId, name: req.fromName, type: "friend", createdAt: now });
-    batch.set(bConn, { uid, studentId: req.toStudentId, name: req.fromName, type: "friend", createdAt: now });
+    batch.set(bConn, { uid, studentId: req.toStudentId, name: req.toName ?? req.toStudentId, type: "friend", createdAt: now });
 
     // Notify requester
     await createNotification(db, req.from, {
@@ -135,7 +138,7 @@ export async function listPendingRequests(
 ): Promise<FriendRequest[]> {
   const snap = await trackQuery("friend_request.list_pending", () =>
     db
-      .collection(friendRequestsCollection(appId))
+      .collection(friendRequestsCollection())
       .where("to", "==", uid)
       .where("status", "==", "pending")
       .orderBy("createdAt", "desc")

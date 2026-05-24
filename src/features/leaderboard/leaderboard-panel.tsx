@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useGlobalLeaderboard, useExamLeaderboard } from "@/hooks/queries/use-leaderboard";
+import { useInfiniteGlobalLeaderboard, useExamLeaderboard } from "@/hooks/queries/use-leaderboard";
 import { motion } from "framer-motion";
 import { Crown, Medal, Trophy } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -23,9 +23,11 @@ type Period = "alltime" | "weekly" | "monthly";
 
 export function LeaderboardPanel() {
   const [period, setPeriod] = useState<Period>("alltime");
-  const { data, isLoading } = useGlobalLeaderboard(period, 25);
-  const global = (data as { entries?: GlobalEntry[] })?.entries ?? [];
-  const myGlobal = (data as { myEntry?: GlobalEntry | null })?.myEntry ?? null;
+  const { data, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteGlobalLeaderboard(period, 25);
+  
+  // Flatten pages
+  const global = data?.pages.flatMap((page) => page.entries) ?? [];
+  const myGlobal = data?.pages[0]?.myEntry ?? null;
 
   const podium = global.slice(0, 3);
   const rest = global.slice(3);
@@ -64,9 +66,9 @@ export function LeaderboardPanel() {
                 </p>
               </div>
               <div className="text-right">
-                <p className="text-sm">Level {myGlobal.level}</p>
-                <p className="font-bold text-purple-400">{myGlobal.xp} XP</p>
-                {myGlobal.streak > 0 && (
+                <p className="text-sm">Level {myGlobal.level ?? 1}</p>
+                <p className="font-bold text-purple-400">{myGlobal.xp ?? 0} XP</p>
+                {(myGlobal.streak ?? 0) > 0 && (
                   <p className="text-xs text-orange-400">{myGlobal.streak} day streak</p>
                 )}
               </div>
@@ -99,7 +101,7 @@ export function LeaderboardPanel() {
                   key={e.uid}
                   initial={{ opacity: 0, x: -8 }}
                   animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: i * 0.03 }}
+                  transition={{ delay: (i % 25) * 0.03 }}
                 >
                   <LeaderboardRow
                     rank={e.rank}
@@ -111,6 +113,18 @@ export function LeaderboardPanel() {
                 </motion.div>
               ))}
             </div>
+            
+            {hasNextPage && period === "alltime" && (
+              <div className="pt-4 text-center">
+                <button
+                  onClick={() => fetchNextPage()}
+                  disabled={isFetchingNextPage}
+                  className="rounded-full bg-white/5 px-6 py-2 text-sm font-medium transition hover:bg-white/10 disabled:opacity-50"
+                >
+                  {isFetchingNextPage ? "Loading..." : "Load More"}
+                </button>
+              </div>
+            )}
           </>
         )}
       </TabsContent>

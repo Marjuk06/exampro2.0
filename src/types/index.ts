@@ -62,6 +62,8 @@ export interface Exam {
   isAnswerRevealed: boolean;
   negativeMarking: number;
   sections?: ExamSection[];
+  allowRetakes?: boolean;
+  maxRetakes?: number;
   tags?: string[];
   difficulty?: "easy" | "medium" | "hard";
   proctoringEnabled: boolean;

@@ -20,8 +20,12 @@ export function withApiHandler(
         }
       }
       return await handler(request, context);
-    } catch (e) {
-      return jsonError(e);
+    } catch (e: unknown) {
+      const err = e as Error;
+      if (!(err instanceof ApiError)) {
+        console.error(`[API Error] ${request.method} ${request.url}:`, err);
+      }
+      return jsonError(err);
     }
   };
 }

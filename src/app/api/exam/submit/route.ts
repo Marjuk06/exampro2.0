@@ -4,7 +4,7 @@ import { getAdminDb } from "@/lib/firebase/admin";
 import { paths } from "@/lib/firebase/paths";
 import { submitMcqSchema } from "@/lib/validations/exam";
 import { calculateMcqScore } from "@/lib/exam/scoring";
-import { rateLimit } from "@/lib/api/rate-limit";
+import { rateLimit } from "@/server/security/rate-limit";
 import { processMcqSubmission } from "@/server/post-submit";
 import type { Exam, Question, ExamResult } from "@/types";
 
@@ -110,7 +110,13 @@ export async function POST(request: Request) {
   const resultRef = await db.collection(paths.results()).add(result);
   await db.doc(paths.liveSession(sessionId)).delete().catch(() => {});
 
-  let ranking = { rank: 0, percentile: 0, participantCount: 0, xpEarned: 0 };
+  let ranking = {
+    rank: 0,
+    percentile: 0,
+    participantCount: 0,
+    xpEarned: 0,
+    rankDelta: null as number | null,
+  };
   try {
     ranking = await processMcqSubmission(db, {
       uid: session.uid,
@@ -132,5 +138,6 @@ export async function POST(request: Request) {
     percentile: ranking.percentile,
     participantCount: ranking.participantCount,
     xpEarned: ranking.xpEarned,
+    rankDelta: ranking.rankDelta,
   });
 }

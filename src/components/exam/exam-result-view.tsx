@@ -8,6 +8,7 @@ import { cn, formatPercent } from "@/lib/utils";
 import { formatResultScore, isCqExamType } from "@/lib/firestore/normalize";
 import { ExamLeaderboardCard } from "@/features/leaderboard/leaderboard-panel";
 import { ResultPdfButton } from "@/components/exam/result-pdf-button";
+import { RankMovementBadge } from "@/components/student/rank-movement-badge";
 import { formatDuration } from "@/lib/utils";
 import type { Exam, ExamResult, Question } from "@/types";
 
@@ -136,12 +137,13 @@ export function ExamResultView({ exam, result, questions }: ExamResultViewProps)
             Score: <span className={cn("font-bold", gradeColor)}>{percentage}%</span>
           </p>
           {result.rank != null && result.rank > 0 && (
-            <p className="mt-3 text-base">
-              Rank{" "}
-              <span className="font-bold text-blue-400">#{result.rank}</span>
+            <p className="mt-3 flex flex-wrap items-center justify-center gap-2 text-base">
+              Rank <span className="font-bold text-blue-400">#{result.rank}</span>
+              {result.rankDelta != null && result.rankDelta !== 0 && (
+                <RankMovementBadge delta={result.rankDelta} />
+              )}
               {result.percentile != null && (
                 <>
-                  {" "}
                   · Top <span className="font-bold text-green-400">{result.percentile}%</span>
                 </>
               )}

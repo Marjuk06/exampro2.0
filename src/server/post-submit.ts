@@ -3,9 +3,16 @@ import { formatRankMessage } from "@/features/rankings/compute";
 import { applyPostSubmitGamification } from "@/server/gamification";
 import { createNotification } from "@/server/notifications";
 import { enqueueJob } from "@/server/jobs/job-runner";
+import { recordActivity } from "@/server/services/engagement/activity.service";
+import { missionsService } from "@/server/services/engagement/missions.service";
+import { recordRankHistory } from "@/server/services/engagement/rank-history.service";
 import { processIncrementalRanking } from "@/server/services/ranking/incremental-rank.service";
 import { paths } from "@/lib/firebase/paths";
 import type { Exam, ExamResult, Question } from "@/types";
+
+function chapterFromQuestion(q: Question): string {
+  return q.tags?.[0] ?? q.sectionId ?? "General";
+}
 
 export interface McqSubmitContext {
   uid: string;
@@ -53,6 +60,25 @@ export async function processMcqSubmission(
     ctx.result.answers ?? {}
   );
 
+  // ✅ FIXED: Batch all mistake writes into a single Firestore commit
+  // Previously: up to 100 sequential `db.doc().set()` calls in a for loop
+  // Now: 1 batch commit regardless of mistake count
+  const mistakeBatch = db.batch();
+  const now = Date.now();
+  for (const q of ctx.questions) {
+    const ans = ctx.result.answers?.[q.id];
+    if (ans !== undefined && ans !== q.correctIndex) {
+      mistakeBatch.set(db.doc(paths.userMistake(uid, q.id)), {
+        questionId: q.id,
+        examId,
+        subject: exam.subject ?? "General",
+        chapter: chapterFromQuestion(q),
+        updatedAt: now,
+      });
+    }
+  }
+  await mistakeBatch.commit();
+
   const prevRankSnap = await db.doc(paths.examRank(examId, uid)).get();
   const previousRank = prevRankSnap.exists
     ? (prevRankSnap.data()?.rank as number | undefined)
@@ -77,6 +103,7 @@ export async function processMcqSubmission(
 
   await db.doc(paths.result(resultId)).update({
     rank: ranking.rank,
+    rankDelta: ranking.rankDelta,
     percentile: ranking.percentile,
     maxScore,
     accuracy: ranking.accuracy,
@@ -129,7 +156,50 @@ export async function processMcqSubmission(
       type: "success",
       link: "/student?tab=achievements",
     });
+    for (const badge of newBadges) {
+      await recordActivity(db, {
+        uid,
+        studentId: ctx.result.studentProfile?.studentId ?? "",
+        name: ctx.result.studentProfile?.name ?? "Student",
+        type: "achievement",
+        title: "Achievement unlocked",
+        message: badge,
+      });
+    }
   }
+
+  if (ranking.rankDelta != null && ranking.rankDelta > 0) {
+    await createNotification(db, uid, {
+      title: "Rank improved!",
+      message: `You moved up ${ranking.rankDelta} place(s) to #${ranking.rank}`,
+      type: "success",
+      link: `/exam/${examId}`,
+    });
+  }
+
+  await recordRankHistory(db, {
+    uid,
+    examId,
+    examTitle: exam.title,
+    subject: exam.subject ?? "General",
+    rank: ranking.rank,
+    previousRank: previousRank ?? null,
+    percentile: ranking.percentile,
+    score,
+    maxScore,
+  });
+
+  await missionsService.increment(uid, "complete_exam", 1);
+  await missionsService.increment(uid, "earn_xp", xpEarned);
+
+  await recordActivity(db, {
+    uid,
+    studentId: ctx.result.studentProfile?.studentId ?? "",
+    name: ctx.result.studentProfile?.name ?? "Student",
+    type: "exam_submit",
+    title: exam.title,
+    message: `Rank #${ranking.rank} · Top ${ranking.percentile}%`,
+  });
 
   enqueueJob({
     type: "analytics.rebuild",

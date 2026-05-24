@@ -1,0 +1,126 @@
+import { getAdminDb } from "@/lib/firebase/admin";
+import { paths } from "@/lib/firebase/paths";
+import { xpProgressInLevel } from "@/features/gamification/xp";
+import { utcDateKey } from "@/features/gamification/missions";
+import { missionsService } from "@/server/services/engagement/missions.service";
+import { getRankHistory } from "@/server/services/engagement/rank-history.service";
+import { getGlobalRankPosition } from "@/server/services/engagement/rankings.service";
+import type { EngagementHubData } from "@/types/engagement";
+import type { UserProfile } from "@/types";
+
+export async function getEngagementHub(uid: string): Promise<EngagementHubData> {
+  const db = getAdminDb();
+  const profileSnap = await db.doc(paths.userProfile(uid)).get();
+  const profile = profileSnap.data() as UserProfile | undefined;
+
+  const xp = profile?.xp ?? 0;
+  const level = profile?.level ?? 1;
+  const streak = profile?.streak?.current ?? 0;
+  const xpProgress = xpProgressInLevel(xp);
+
+  const globalRank = await getGlobalRankPosition(uid);
+
+  const engagementSnap = await db.doc(paths.userEngagement(uid)).get();
+  const engagement = engagementSnap.data() ?? {};
+  const today = utcDateKey();
+  const lastClaim = (engagement.lastDailyClaim as string | null) ?? null;
+  const canClaim = lastClaim !== today;
+  const dailyStreak = (engagement.dailyRewardStreak as number) ?? 0;
+
+  const missions = await missionsService.getMissions(uid);
+  const history = await getRankHistory(db, uid, 1);
+
+  const featuredSnap = await db.doc(paths.featuredExams()).get();
+  let featuredExams = (featuredSnap.data()?.exams ?? []) as Array<{
+    id: string;
+    title: string;
+    subject: string;
+  }>;
+  if (featuredExams.length === 0) {
+    const examsSnap = await db
+      .collection(paths.exams())
+      .orderBy("createdAt", "desc")
+      .limit(3)
+      .get();
+    featuredExams = examsSnap.docs.map((d) => ({
+      id: d.id,
+      title: String(d.data().title ?? "Exam"),
+      subject: String(d.data().subject ?? "General"),
+    }));
+  }
+
+  const weeklyProgress = missions.find((m) => m.id === "weekly_exams")?.progress ?? 0;
+
+  return {
+    globalRank,
+    globalXp: xp,
+    level,
+    title: profile?.title ?? "Novice Scholar",
+    streak,
+    xpProgress: {
+      current: xpProgress.current,
+      needed: xpProgress.needed,
+      percent: xpProgress.percent,
+    },
+    dailyReward: {
+      lastClaimDate: lastClaim,
+      streakDays: dailyStreak,
+      totalClaims: (engagement.totalDailyClaims as number) ?? 0,
+      canClaim,
+      todayReward: 15 + dailyStreak * 5,
+    },
+    missions,
+    featuredExams,
+    weeklyGoal: { target: 3, progress: weeklyProgress },
+    recentRankChange: history[0] ?? null,
+  };
+}
+
+export async function claimDailyReward(uid: string): Promise<{
+  xp: number;
+  streakDays: number;
+}> {
+  const db = getAdminDb();
+  const today = utcDateKey();
+  const ref = db.doc(paths.userEngagement(uid));
+  const snap = await ref.get();
+  const data = snap.data() ?? {};
+
+  if (data.lastDailyClaim === today) {
+    throw new Error("Already claimed today");
+  }
+
+  const yesterday = new Date();
+  yesterday.setUTCDate(yesterday.getUTCDate() - 1);
+  const yesterdayKey = utcDateKey(yesterday);
+  const streakDays =
+    data.lastDailyClaim === yesterdayKey
+      ? ((data.dailyRewardStreak as number) ?? 0) + 1
+      : 1;
+  const xp = 15 + streakDays * 5;
+
+  const profileRef = db.doc(paths.userProfile(uid));
+  const profile = await profileRef.get();
+  const currentXp = (profile.data()?.xp as number) ?? 0;
+  const totalXp = currentXp + xp;
+
+  await ref.set(
+    {
+      lastDailyClaim: today,
+      dailyRewardStreak: streakDays,
+      totalDailyClaims: ((data.totalDailyClaims as number) ?? 0) + 1,
+      updatedAt: Date.now(),
+    },
+    { merge: true }
+  );
+
+  const { levelFromXp, titleForLevel } = await import("@/features/gamification/xp");
+  await profileRef.update({
+    xp: totalXp,
+    level: levelFromXp(totalXp),
+    title: titleForLevel(levelFromXp(totalXp)),
+    updatedAt: Date.now(),
+  });
+
+  return { xp, streakDays };
+}

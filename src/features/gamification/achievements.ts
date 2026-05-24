@@ -43,6 +43,34 @@ export const ACHIEVEMENTS: AchievementDefinition[] = [
     icon: "⏱️",
     xpReward: 40,
   },
+  {
+    id: "top_10_percent",
+    title: "Top 10%",
+    description: "Rank in the top 10% of an exam",
+    icon: "🥈",
+    xpReward: 80,
+  },
+  {
+    id: "streak_7_reward",
+    title: "7 Day Streak",
+    description: "Maintain a 7-day study streak",
+    icon: "🔥",
+    xpReward: 70,
+  },
+  {
+    id: "practice_50",
+    title: "Practice Pro",
+    description: "Complete 50 practice questions",
+    icon: "📚",
+    xpReward: 60,
+  },
+  {
+    id: "questions_100",
+    title: "1000 Questions Solved",
+    description: "Answer 100 exam questions correctly",
+    icon: "🧠",
+    xpReward: 200,
+  },
 ];
 
 export function evaluateAchievements(input: {
@@ -53,6 +81,8 @@ export function evaluateAchievements(input: {
   timeTakenMs: number;
   examDurationMin: number;
   isFirstExam: boolean;
+  correctCount?: number;
+  totalCorrectLifetime?: number;
 }): { newBadges: string[]; bonusXp: number } {
   const earned = new Set(input.badges);
   let bonusXp = 0;
@@ -67,8 +97,15 @@ export function evaluateAchievements(input: {
   if (input.isFirstExam) grant("first_exam");
   if (input.accuracy >= 100) grant("perfect_score");
   if (input.percentile <= 1) grant("top_1_percent");
-  if (input.streak >= 7) grant("streak_7");
+  if (input.percentile <= 10) grant("top_10_percent");
+  if (input.streak >= 7) {
+    grant("streak_7");
+    grant("streak_7_reward");
+  }
   if (input.streak >= 30) grant("streak_30");
+  if ((input.totalCorrectLifetime ?? 0) + (input.correctCount ?? 0) >= 100) {
+    grant("questions_100");
+  }
   const halfTimeMs = input.examDurationMin * 60 * 1000 * 0.5;
   if (halfTimeMs > 0 && input.timeTakenMs > 0 && input.timeTakenMs < halfTimeMs) {
     grant("fast_solver");

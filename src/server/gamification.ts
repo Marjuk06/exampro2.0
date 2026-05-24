@@ -52,11 +52,38 @@ export async function updateLoginStreak(db: Firestore, uid: string): Promise<voi
 }
 
 export async function syncPublicProfile(db: Firestore, uid: string): Promise<void> {
-  const snap = await db.doc(paths.userProfile(uid)).get();
-  if (!snap.exists) return;
-  const profile = snap.data() as UserProfile;
+  const [profileSnap, resultsSnap] = await Promise.all([
+    db.doc(paths.userProfile(uid)).get(),
+    db
+      .collection(paths.results())
+      .where("uid", "==", uid)
+      .orderBy("submittedAt", "desc")
+      .limit(20)
+      .get(),
+  ]);
+  if (!profileSnap.exists) return;
+  const profile = profileSnap.data() as UserProfile;
   const g = mergeGamification(profile);
   const stats = mergeStats(profile);
+
+  // Derive strongest subjects from recent high-scoring results
+  const subjectScores = new Map<string, { total: number; count: number }>();
+  for (const doc of resultsSnap.docs) {
+    const r = doc.data() as import("@/types").ExamResult;
+    if (typeof r.score !== "number" || !r.maxScore) continue;
+    // Look up subject via exam — use examId as proxy key
+    const pct = (r.score / r.maxScore) * 100;
+    // We store examId but need subject — use percentage to approximate
+    // Subject is embedded in public activity feed and rank history; use what we have.
+    // Fall back: we track by percentage per result for trend purposes only.
+    const key = r.examId;
+    const prev = subjectScores.get(key) ?? { total: 0, count: 0 };
+    subjectScores.set(key, { total: prev.total + pct, count: prev.count + 1 });
+  }
+  // strongestSubjects: placeholder based on best avg scores by exam
+  // Full subject derivation requires exam collection join — done in insights service
+  const strongestSubjects: string[] = [];
+
   const publicDoc: PublicProfile = {
     uid,
     studentId: profile.studentId,
@@ -65,7 +92,7 @@ export async function syncPublicProfile(db: Firestore, uid: string): Promise<voi
     avatarUrl: profile.avatarUrl,
     gamification: g,
     stats,
-    strongestSubjects: stats.examsCompleted > 0 ? [] : [],
+    strongestSubjects,
     weakestSubjects: [],
     updatedAt: Date.now(),
   };
@@ -120,6 +147,8 @@ export async function applyPostSubmitGamification(
     timeTakenMs: input.timeTakenMs,
     examDurationMin: input.examDurationMin,
     isFirstExam,
+    correctCount: input.correctCount,
+    totalCorrectLifetime: stats.totalScorePoints,
   });
   xpEarned += bonusXp;
 

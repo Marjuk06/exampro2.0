@@ -25,6 +25,8 @@ export interface UserProfile {
   streak?: import("@/types/gamification").StreakState;
   badges?: string[];
   stats?: import("@/types/gamification").UserStatsAggregate;
+  favoriteSubjects?: string[];
+  practiceQuestionsAnswered?: number;
   createdAt: number;
   updatedAt: number;
 }
@@ -103,6 +105,7 @@ export interface ExamResult {
   gradedBy?: string;
   /** Ranking snapshot (set server-side on MCQ submit) */
   rank?: number;
+  rankDelta?: number | null;
   percentile?: number;
   maxScore?: number;
   accuracy?: number;

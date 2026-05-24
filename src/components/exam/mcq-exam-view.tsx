@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { CheckCircle2, Hand, Send, Shuffle } from "lucide-react";
+import { LiveRankWidget } from "@/components/exam/live-rank-widget";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -151,14 +152,19 @@ export function McqExamView({ exam, questions, endTime, sessionId }: McqExamView
 
   return (
     <div className="flex w-full max-w-5xl gap-6">
-      <QuestionPalette
-        questions={orderedQuestions}
-        answers={answers}
-        bookmarks={bookmarks}
-        currentIndex={currentIndex}
-        onSelect={setCurrentIndex}
-        onToggleBookmark={toggleBookmark}
-      />
+      {/* Sidebar: palette + live ranking */}
+      <div className="flex flex-col gap-4">
+        <QuestionPalette
+          questions={orderedQuestions}
+          answers={answers}
+          bookmarks={bookmarks}
+          currentIndex={currentIndex}
+          onSelect={setCurrentIndex}
+          onToggleBookmark={toggleBookmark}
+        />
+        {/* Live ranking widget — non-blocking, polled every 15s */}
+        <LiveRankWidget examId={exam.id} className="w-full" />
+      </div>
 
       <div className="flex-1 space-y-6">
         <Card className="relative overflow-hidden border-t-4 border-blue-500">

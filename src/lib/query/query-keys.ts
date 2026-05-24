@@ -14,4 +14,20 @@ export const queryKeys = {
     ["admin", "results", examId ?? "all"] as const,
   adminLiveSessions: ["admin", "live-sessions"] as const,
   profile: (studentId: string) => ["profile", studentId] as const,
+  engagement: ["student", "engagement"] as const,
+  insights: ["student", "insights"] as const,
+  practice: ["student", "practice"] as const,
+  bookmarks: ["student", "bookmarks"] as const,
+  rankings: ["student", "rankings"] as const,
+  social: ["student", "social"] as const,
+  // Phase 4
+  challenges: ["student", "challenges"] as const,
+  challengeDetail: (id: string) => ["student", "challenges", id] as const,
+  friendRequests: ["student", "friend-requests"] as const,
+  clan: (clanId: string) => ["clan", clanId] as const,
+  clanLeaderboard: ["leaderboard", "clan"] as const,
+  liveRanking: (examId: string) => ["exam", "live-ranking", examId] as const,
+  notificationPrefs: ["student", "notification-prefs"] as const,
+  adminDiagnostics: ["admin", "diagnostics"] as const,
 };
+

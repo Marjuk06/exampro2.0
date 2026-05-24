@@ -56,10 +56,34 @@ export function ResultPdfButton({ exam, result, questions }: ResultPdfButtonProp
     w.print();
   }
 
+  async function handleServerPdf() {
+    if (!result.id) {
+      handlePrint();
+      return;
+    }
+    const res = await fetch(`/api/student/reports/result?resultId=${result.id}`);
+    if (!res.ok) {
+      handlePrint();
+      return;
+    }
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `result-${result.id}.pdf`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
   return (
-    <Button variant="outline" size="sm" onClick={handlePrint} className="gap-2">
+  <div className="flex gap-2">
+    <Button variant="outline" size="sm" onClick={handleServerPdf} className="gap-2">
       <Download className="h-4 w-4" />
-      Download PDF
+      Certificate PDF
     </Button>
+    <Button variant="ghost" size="sm" onClick={handlePrint}>
+      Print
+    </Button>
+  </div>
   );
 }

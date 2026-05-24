@@ -44,8 +44,84 @@ service cloud.firestore {
       allow read, write: if isOwner(userId);
     }
 
+    match /artifacts/{appId}/users/{userId}/practice_sessions/{sessionId} {
+      allow read: if isOwner(userId);
+      allow write: if false;
+    }
+
+    match /artifacts/{appId}/users/{userId}/engagement/{docId} {
+      allow read: if isOwner(userId);
+      // Allow write only for notification preferences (docId == "preferences")
+      allow write: if isOwner(userId) && docId == 'preferences';
+    }
+
+    match /artifacts/{appId}/users/{userId}/rank_history/{entryId} {
+      allow read: if isOwner(userId) || isAdmin();
+      allow write: if false;
+    }
+
+    match /artifacts/{appId}/users/{userId}/connections/{otherUid} {
+      allow read: if isOwner(userId);
+      allow write: if false;
+    }
+
+    match /artifacts/{appId}/users/{userId}/revision_folders/{folderId} {
+      allow read, write: if isOwner(userId);
+    }
+
+    match /artifacts/{appId}/users/{userId}/mistakes/{questionId} {
+      allow read: if isOwner(userId);
+      allow write: if false;
+    }
+
     match /artifacts/{appId}/users/{userId}/exam_attempts/{attemptId} {
       allow read: if isOwner(userId) || isAdmin();
+      allow write: if false;
+    }
+
+    // ——— Public feed / challenges / social ———
+    match /artifacts/{appId}/public/data/activity_feed/{itemId} {
+      allow read: if isSignedIn();
+      allow write: if false;
+    }
+
+    match /artifacts/{appId}/public/data/daily_challenges/{dateKey} {
+      allow read: if isSignedIn();
+      allow write: if false;
+    }
+
+    match /artifacts/{appId}/public/data/featured_exams/{docId} {
+      allow read: if isSignedIn();
+      allow write: if false;
+    }
+
+    match /artifacts/{appId}/public/data/chapter_leaderboards/{boardId} {
+      allow read: if isSignedIn();
+      allow write: if false;
+    }
+
+    // ——— Challenges: participants or admin ———
+    match /artifacts/{appId}/public/data/challenges/{challengeId} {
+      allow read: if isSignedIn() && (
+        resource.data.challengerId == request.auth.uid ||
+        resource.data.challengedId == request.auth.uid ||
+        isAdmin()
+      );
+      allow write: if false;
+    }
+
+    // ——— Friend requests: sender or recipient ———
+    match /artifacts/{appId}/public/data/friend_requests/{reqId} {
+      allow read: if isSignedIn() && (
+        resource.data.from == request.auth.uid ||
+        resource.data.to == request.auth.uid
+      );
+      allow write: if false;
+    }
+
+    // ——— Clans: signed-in can read; write server only ———
+    match /artifacts/{appId}/public/data/clans/{clanId} {
+      allow read: if isSignedIn();
       allow write: if false;
     }
 

@@ -103,7 +103,7 @@ export interface AchievementDefinition {
 export interface NotificationPayload {
   title: string;
   message: string;
-  type: "info" | "success" | "warning" | "error";
+  type: "info" | "success" | "warning" | "error" | "social" | "challenge";
   link?: string;
 }
 

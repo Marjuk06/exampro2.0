@@ -12,6 +12,9 @@ import type { PublicProfile } from "@/types/gamification";
 
 export function PublicProfileView({ studentId }: { studentId: string }) {
   const [profile, setProfile] = useState<PublicProfile | null>(null);
+  const [recentRanks, setRecentRanks] = useState<
+    Array<{ examTitle?: string; rank: number; percentile: number }>
+  >([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -21,10 +24,22 @@ export function PublicProfileView({ studentId }: { studentId: string }) {
         if (!r.ok) throw new Error("Profile not found");
         return r.json();
       })
-      .then((d) => setProfile(d.profile))
+      .then((d) => {
+        setProfile(d.profile);
+        setRecentRanks(d.recentRanks ?? []);
+      })
       .catch((e) => setError(e instanceof Error ? e.message : "Error"))
       .finally(() => setLoading(false));
   }, [studentId]);
+
+  function shareProfile() {
+    const url = window.location.href;
+    if (navigator.share) {
+      navigator.share({ title: profile?.name ?? "Profile", url }).catch(() => {});
+    } else {
+      navigator.clipboard.writeText(url);
+    }
+  }
 
   if (loading) {
     return (
@@ -62,6 +77,13 @@ export function PublicProfileView({ studentId }: { studentId: string }) {
           </Avatar>
           <h1 className="mt-4 text-2xl font-bold">{profile.name}</h1>
           <p className="text-muted-foreground">{profile.studentId}</p>
+          <button
+            type="button"
+            onClick={shareProfile}
+            className="mt-2 text-xs text-blue-400 hover:underline"
+          >
+            Share profile
+          </button>
           {profile.bio && <p className="mt-2 text-sm">{profile.bio}</p>}
           <div className="mt-4 flex flex-wrap gap-3">
             <BadgePill icon={<Star className="h-4 w-4" />} label={`Level ${g.level}`} />
@@ -96,6 +118,27 @@ export function PublicProfileView({ studentId }: { studentId: string }) {
         <Stat label="Best rank" value={profile.stats.bestRank ?? "—"} />
         <Stat label="Total XP" value={g.xp} />
       </div>
+
+      {recentRanks.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Recent ranks</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            {recentRanks.slice(0, 5).map((r, i) => (
+              <div
+                key={i}
+                className="flex justify-between rounded-lg border border-white/10 p-3 text-sm"
+              >
+                <span>{String(r.examTitle ?? "Exam")}</span>
+                <span className="text-blue-400">
+                  #{r.rank} · Top {r.percentile}%
+                </span>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+      )}
 
       <Card>
         <CardHeader>

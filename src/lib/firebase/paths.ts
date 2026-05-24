@@ -47,4 +47,63 @@ export const paths = {
     `artifacts/${APP_ID}/public/data/analytics/exams/${examId}`,
   subjectLeaderboard: (subject: string) =>
     `artifacts/${APP_ID}/public/data/subject_leaderboards/${encodeURIComponent(subject)}`,
+  chapterLeaderboard: (subject: string, chapter: string) =>
+    `artifacts/${APP_ID}/public/data/chapter_leaderboards/${encodeURIComponent(subject)}_${encodeURIComponent(chapter)}`,
+  userPracticeSessions: (uid: string) =>
+    `artifacts/${APP_ID}/users/${uid}/practice_sessions`,
+  userPracticeSession: (uid: string, sessionId: string) =>
+    `artifacts/${APP_ID}/users/${uid}/practice_sessions/${sessionId}`,
+  userEngagement: (uid: string) =>
+    `artifacts/${APP_ID}/users/${uid}/engagement/main`,
+  userMissions: (uid: string) =>
+    `artifacts/${APP_ID}/users/${uid}/engagement/missions`,
+  userRankHistory: (uid: string) =>
+    `artifacts/${APP_ID}/users/${uid}/rank_history`,
+  userConnections: (uid: string) =>
+    `artifacts/${APP_ID}/users/${uid}/connections`,
+  userConnection: (uid: string, otherUid: string) =>
+    `artifacts/${APP_ID}/users/${uid}/connections/${otherUid}`,
+  userRevisionFolders: (uid: string) =>
+    `artifacts/${APP_ID}/users/${uid}/revision_folders`,
+  userRevisionFolder: (uid: string, folderId: string) =>
+    `artifacts/${APP_ID}/users/${uid}/revision_folders/${folderId}`,
+  userMistakes: (uid: string) =>
+    `artifacts/${APP_ID}/users/${uid}/mistakes`,
+  userMistake: (uid: string, questionId: string) =>
+    `artifacts/${APP_ID}/users/${uid}/mistakes/${questionId}`,
+  activityFeed: () => `artifacts/${APP_ID}/public/data/activity_feed`,
+  activityFeedItem: (id: string) =>
+    `artifacts/${APP_ID}/public/data/activity_feed/${id}`,
+  dailyChallenge: (dateKey: string) =>
+    `artifacts/${APP_ID}/public/data/daily_challenges/${dateKey}`,
+  featuredExams: () =>
+    `artifacts/${APP_ID}/public/data/featured_exams/current`,
+  avatarStorage: (uid: string, fileName: string) =>
+    `avatars/${uid}/${fileName}`,
+  // Phase 4: Social
+  friendRequests: () =>
+    `artifacts/${APP_ID}/public/data/friend_requests`,
+  friendRequest: (reqId: string) =>
+    `artifacts/${APP_ID}/public/data/friend_requests/${reqId}`,
+  clans: () =>
+    `artifacts/${APP_ID}/public/data/clans`,
+  clan: (clanId: string) =>
+    `artifacts/${APP_ID}/public/data/clans/${clanId}`,
+  clanMembership: (uid: string) =>
+    `artifacts/${APP_ID}/users/${uid}/clan_membership/current`,
+  // Phase 4: Challenges
+  challenges: () =>
+    `artifacts/${APP_ID}/public/data/challenges`,
+  challenge: (cid: string) =>
+    `artifacts/${APP_ID}/public/data/challenges/${cid}`,
+  challengeParticipants: (cid: string) =>
+    `artifacts/${APP_ID}/public/data/challenges/${cid}/participants`,
+  challengeParticipant: (cid: string, uid: string) =>
+    `artifacts/${APP_ID}/public/data/challenges/${cid}/participants/${uid}`,
+  // Phase 4: Notification preferences
+  notificationPrefs: (uid: string) =>
+    `artifacts/${APP_ID}/users/${uid}/engagement/preferences`,
+  // Phase 4: Question images
+  questionImageStorage: (questionId: string, fileName: string) =>
+    `questions/${questionId}/${fileName}`,
 };

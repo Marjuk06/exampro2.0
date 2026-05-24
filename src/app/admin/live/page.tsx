@@ -10,9 +10,7 @@ import { formatDuration } from "@/lib/utils";
 import type { LiveSession } from "@/types";
 
 export default function LiveMonitorPage() {
-  const { activeSessions, allSessions, loading, now } = useActiveLiveSessions({
-    pruneStale: false,
-  });
+  const { activeSessions, allSessions, loading, now } = useActiveLiveSessions();
   const [clearing, setClearing] = useState(false);
 
   async function addTime(ls: LiveSession, mins: number) {

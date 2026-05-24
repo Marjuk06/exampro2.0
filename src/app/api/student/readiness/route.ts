@@ -2,7 +2,6 @@ import { requireAuth } from "@/server/auth/require-auth";
 import { withApiHandler, jsonOk } from "@/server/api/handler";
 import { getAdminDb } from "@/lib/firebase/admin";
 import { paths } from "@/lib/firebase/paths";
-import { computeStudentInsights } from "@/server/services/engagement/student-insights.service";
 import {
   computeExamReadiness,
   buildSmartPracticeQueue,

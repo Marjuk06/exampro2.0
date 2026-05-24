@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
+
 import { motion, AnimatePresence } from "framer-motion";
 import { CheckCircle2, Hand, Send, Shuffle } from "lucide-react";
 import { LiveRankWidget } from "@/components/exam/live-rank-widget";

@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { requireAdmin } from "@/server/auth/require-admin";
 import { jsonOk } from "@/server/api/response";
-import { parseJson, withApiHandler } from "@/server/api/handler";
+import { withApiHandler } from "@/server/api/handler";
 import { adminActionLog } from "@/server/security/logger";
 import { clientIp, rateLimit } from "@/server/security/rate-limit";
 import { adminExamService } from "@/server/services/admin-exam.service";

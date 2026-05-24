@@ -5,7 +5,7 @@ import { paths } from "@/lib/firebase/paths";
 import { filterMcqResults } from "@/lib/firestore/normalize";
 import { formatPercent } from "@/lib/utils";
 import { trackQuery } from "@/server/observability/query-metrics";
-import type { ExamResult, Question } from "@/types";
+import type { ExamResult } from "@/types";
 
 export const GET = withApiHandler(async () => {
   await requireAdmin();

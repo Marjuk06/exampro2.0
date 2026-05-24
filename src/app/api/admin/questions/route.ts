@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { requireAdmin } from "@/server/auth/require-admin";
-import { jsonOk, parseJson, withApiHandler } from "@/server/api/handler";
+import { jsonOk, withApiHandler } from "@/server/api/handler";
 import { adminActionLog } from "@/server/security/logger";
 import { adminQuestionService } from "@/server/services/admin-question.service";
 import { bulkQuestionsSchema } from "@/lib/validations/exam";

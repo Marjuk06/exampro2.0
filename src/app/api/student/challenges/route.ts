@@ -1,5 +1,5 @@
 import { requireAuth } from "@/server/auth/require-auth";
-import { withApiHandler, jsonOk, parseJson } from "@/server/api/handler";
+import { withApiHandler, jsonOk } from "@/server/api/handler";
 import { getAdminDb } from "@/lib/firebase/admin";
 import { paths } from "@/lib/firebase/paths";
 import {

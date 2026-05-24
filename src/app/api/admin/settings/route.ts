@@ -16,7 +16,8 @@ const updateSchema = z.object({
 export const GET = withApiHandler(async () => {
   await requireAdmin();
   const settings = await settingsRepository.get();
-  const { adminPasscode: _, ...safe } = settings as Record<string, unknown>;
+  const safe = { ...settings } as Record<string, unknown>;
+  delete safe.adminPasscode;
   return jsonOk(safe);
 });
 

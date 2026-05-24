@@ -13,14 +13,14 @@ export class UserRepository {
 
   async setProfile(uid: string, profile: UserProfile): Promise<void> {
     const cleaned = Object.fromEntries(
-      Object.entries(profile).filter(([_, v]) => v !== undefined)
+      Object.entries(profile).filter(([, v]) => v !== undefined)
     ) as unknown as UserProfile;
     await this.db.doc(paths.userProfile(uid)).set(cleaned);
   }
 
   async updateProfile(uid: string, data: Partial<UserProfile>): Promise<void> {
     const cleaned = Object.fromEntries(
-      Object.entries(data).filter(([_, v]) => v !== undefined)
+      Object.entries(data).filter(([, v]) => v !== undefined)
     );
     await this.db.doc(paths.userProfile(uid)).update({
       ...cleaned,

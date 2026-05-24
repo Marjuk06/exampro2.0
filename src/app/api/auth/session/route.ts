@@ -12,7 +12,7 @@ import { securityLog } from "@/server/security/logger";
 import { rateLimit, clientIp } from "@/server/security/rate-limit";
 import { syncPublicProfile } from "@/server/gamification";
 import { userRepository } from "@/server/repositories/user.repository";
-import type { UserProfile } from "@/types";
+
 
 const isDev = process.env.NODE_ENV === "development";
 

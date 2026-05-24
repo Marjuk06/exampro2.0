@@ -97,8 +97,9 @@ export const ResultPdfTemplate = forwardRef<HTMLDivElement, ResultPdfTemplatePro
             const studentAns = result.answers?.[q.id];
             
             if (isCq) {
-              const mark = typeof studentAns === "object" ? (studentAns as any).mark : null;
-              const comment = typeof studentAns === "object" ? (studentAns as any).comment : null;
+              const ansObj = typeof studentAns === "object" ? (studentAns as { mark?: number | string; comment?: string }) : null;
+              const mark = ansObj?.mark ?? null;
+              const comment = ansObj?.comment ?? null;
               return (
                 <div key={q.id} style={{ padding: "16px", border: "1px solid #e5e7eb", borderRadius: "8px", pageBreakInside: "avoid" }}>
                   <p style={{ margin: "0 0 12px 0", fontSize: "16px", fontWeight: "bold" }}>
@@ -135,7 +136,7 @@ export const ResultPdfTemplate = forwardRef<HTMLDivElement, ResultPdfTemplatePro
                     const isStudentChoice = studentAns === optIdx;
                     const isActualCorrect = q.correctIndex === optIdx;
                     
-                    let optStyle = { padding: "10px", borderRadius: "8px", border: "1px solid #e5e7eb", backgroundColor: "#ffffff", fontSize: "14px" };
+                    const optStyle = { padding: "10px", borderRadius: "8px", border: "1px solid #e5e7eb", backgroundColor: "#ffffff", fontSize: "14px" };
                     
                     if (isActualCorrect) {
                       optStyle.border = "2px solid #10b981";

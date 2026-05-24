@@ -27,6 +27,20 @@ export class QuestionRepository {
   async delete(id: string): Promise<void> {
     await this.db.doc(paths.question(id)).delete();
   }
+
+  async bulkDelete(ids: string[]): Promise<void> {
+    if (!ids.length) return;
+    // Firestore batch limit is 500
+    const chunkSize = 500;
+    for (let i = 0; i < ids.length; i += chunkSize) {
+      const chunk = ids.slice(i, i + chunkSize);
+      const batch = this.db.batch();
+      for (const id of chunk) {
+        batch.delete(this.db.doc(paths.question(id)));
+      }
+      await batch.commit();
+    }
+  }
 }
 
 export const questionRepository = new QuestionRepository();

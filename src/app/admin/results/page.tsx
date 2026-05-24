@@ -10,9 +10,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Download, FileText, Loader2, CheckCircle2, FileSpreadsheet } from "lucide-react";
 import { useAdminResults } from "@/hooks/queries/use-admin-results";
 import { useFirestoreCollection, limit, orderBy } from "@/hooks/use-firestore-collection";
 import { publicPaths } from "@/lib/firestore/public-data";
+import { LeaderboardPdfTemplate } from "@/components/admin/leaderboard-pdf-template";
+import { motion } from "framer-motion";
+import { useRef } from "react";
 import {
   formatExamTypeLabel,
   formatResultScore,
@@ -47,23 +52,106 @@ export default function AdminResultsPage() {
 
   const examList = exams.map((e) => ({ id: e.id, title: e.title ?? "Unknown" }));
 
+  const [isExporting, setIsExporting] = useState(false);
+  const [progressText, setProgressText] = useState("");
+  const [progressStep, setProgressStep] = useState(0);
+  const pdfRef = useRef<HTMLDivElement>(null);
+
+  const exportCsv = () => {
+    if (!results.length) return;
+    const headers = ["Exam", "Student Name", "Student ID", "Type", "Score", "Date"];
+    const rows = results.map(r => {
+      const profile = normalizeStudentProfile(r.studentProfile);
+      const title = getExamTitle(examList, r.examId);
+      const score = formatResultScore(r.score);
+      const type = formatExamTypeLabel(r.examType);
+      const date = getSubmittedAtMs(r.submittedAt) > 0 ? new Date(getSubmittedAtMs(r.submittedAt)).toLocaleDateString() : "";
+      return `"${title}","${profile.name}","${profile.studentId}","${type}","${score}","${date}"`;
+    });
+    const csv = [headers.join(","), ...rows].join("\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", `Leaderboard_Export_${new Date().toISOString().split("T")[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const exportPdf = async () => {
+    if (isExporting || !pdfRef.current || !results.length) return;
+    setIsExporting(true);
+    setProgressStep(1);
+    setProgressText("Preparing leaderboard layout...");
+
+    try {
+      const [html2canvas, jsPDF] = await Promise.all([
+        import("html2canvas").then(m => m.default),
+        import("jspdf").then(m => m.jsPDF)
+      ]);
+
+      setProgressText("Rendering high-quality graphics...");
+      await new Promise(r => setTimeout(r, 500));
+
+      const canvas = await html2canvas(pdfRef.current, { scale: 2, useCORS: true, logging: false, backgroundColor: "#ffffff" });
+      setProgressText("Finalizing PDF export...");
+
+      const imgData = canvas.toDataURL("image/png");
+      const pdf = new jsPDF({ orientation: "portrait", unit: "px", format: [794, 1123] });
+      const imgProps = pdf.getImageProperties(imgData);
+      const imgHeight = (imgProps.height * 794) / imgProps.width;
+      let heightLeft = imgHeight;
+      let position = 0;
+
+      pdf.addImage(imgData, "PNG", 0, position, 794, imgHeight);
+      heightLeft -= 1123;
+
+      while (heightLeft > 0) {
+        position = heightLeft - imgHeight;
+        pdf.addPage();
+        pdf.addImage(imgData, "PNG", 0, position, 794, imgHeight);
+        heightLeft -= 1123;
+      }
+
+      pdf.save(`Leaderboard_Export_${new Date().toISOString().split("T")[0]}.pdf`);
+      setProgressStep(2);
+      setProgressText("Download Complete!");
+      setTimeout(() => { setIsExporting(false); setProgressStep(0); }, 2000);
+    } catch (err) {
+      console.error(err);
+      setProgressText("Error generating PDF.");
+      setTimeout(() => { setIsExporting(false); setProgressStep(0); }, 3000);
+    }
+  };
+
   return (
     <div>
-      <div className="mb-6 flex flex-wrap justify-between gap-3">
+      <div className="mb-6 flex flex-wrap justify-between gap-3 items-center">
         <h2 className="text-2xl font-bold">All Results Archive</h2>
-        <Select value={filter} onValueChange={setFilter}>
-          <SelectTrigger className="w-48">
-            <SelectValue placeholder="All Exams" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Exams</SelectItem>
-            {examList.map((e) => (
-              <SelectItem key={e.id} value={e.id}>
-                {e.title}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <div className="flex flex-wrap gap-3 items-center">
+          <Select value={filter} onValueChange={setFilter}>
+            <SelectTrigger className="w-48">
+              <SelectValue placeholder="All Exams" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Exams</SelectItem>
+              {examList.map((e) => (
+                <SelectItem key={e.id} value={e.id}>
+                  {e.title}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          <Button variant="outline" className="gap-2" onClick={exportCsv} disabled={results.length === 0}>
+            <FileSpreadsheet className="h-4 w-4" /> Export CSV
+          </Button>
+          <Button variant="purple" className="gap-2" onClick={exportPdf} disabled={results.length === 0 || isExporting}>
+            {isExporting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
+            Export PDF
+          </Button>
+        </div>
       </div>
       <div className="glass-panel overflow-x-auto rounded-2xl">
         <table className="w-full min-w-full border-separate border-spacing-0">
@@ -110,6 +198,34 @@ export default function AdminResultsPage() {
           </Button>
         </div>
       )}
+
+      {/* Hidden PDF Layout */}
+      <div style={{ position: "absolute", left: "-9999px", top: 0 }}>
+        <LeaderboardPdfTemplate ref={pdfRef} results={results} exams={examList} filterExam={filter} />
+      </div>
+
+      <Dialog open={isExporting} onOpenChange={() => {}}>
+        <DialogContent className="sm:max-w-md [&>button]:hidden p-8">
+          <DialogHeader>
+            <DialogTitle className="text-center text-xl">Generating Report</DialogTitle>
+          </DialogHeader>
+          <div className="flex flex-col items-center justify-center gap-4 py-8">
+            {progressStep === 1 ? (
+              <div className="relative flex h-16 w-16 items-center justify-center">
+                <Loader2 className="absolute h-16 w-16 animate-spin text-blue-500" />
+                <FileText className="absolute h-6 w-6 text-blue-500" />
+              </div>
+            ) : progressStep === 2 ? (
+              <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} className="h-16 w-16 rounded-full bg-green-500/20 flex items-center justify-center">
+                <CheckCircle2 className="h-8 w-8 text-green-500" />
+              </motion.div>
+            ) : null}
+            <p className="mt-4 text-lg font-medium text-muted-foreground animate-pulse text-center">
+              {progressText}
+            </p>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

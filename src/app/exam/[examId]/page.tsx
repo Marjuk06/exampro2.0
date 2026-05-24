@@ -141,7 +141,7 @@ export default function ExamPage({
     return (
       <>
         <StudentHeader />
-        <div className="mx-auto max-w-2xl px-4 pt-24">
+        <div className="mx-auto max-w-2xl px-4 pt-20 sm:pt-24">
           <Card>
             <CardContent className="p-8 text-center">
               <h2 className="text-2xl font-bold text-red-400">Exam Not Found</h2>
@@ -159,7 +159,7 @@ export default function ExamPage({
     return (
       <>
         <StudentHeader />
-        <div className="mx-auto max-w-2xl px-4 pt-24">
+        <div className="mx-auto max-w-2xl px-4 pt-20 sm:pt-24">
           <Card>
             <CardContent className="p-8 text-center">
               <h2 className="text-2xl font-bold text-red-400">Access Denied</h2>
@@ -178,7 +178,7 @@ export default function ExamPage({
     return (
       <>
         <StudentHeader />
-        <div className="mx-auto max-w-5xl px-4 pt-24">
+        <div className="mx-auto max-w-5xl px-4 pt-20 sm:pt-24">
           <ExamResultView exam={exam} result={myResult} questions={questions} />
         </div>
       </>
@@ -197,7 +197,7 @@ export default function ExamPage({
     return (
       <>
         <StudentHeader />
-        <div className="mx-auto max-w-2xl px-4 pt-24 text-center">
+        <div className="mx-auto max-w-2xl px-4 pt-20 sm:pt-24 text-center">
           <Card>
             <CardContent className="p-8">
               <h2 className="text-xl font-bold text-yellow-400">Exam Not Started</h2>
@@ -215,7 +215,7 @@ export default function ExamPage({
     return (
       <>
         <StudentHeader />
-        <div className="mx-auto max-w-2xl px-4 pt-24 text-center">
+        <div className="mx-auto max-w-2xl px-4 pt-20 sm:pt-24 text-center">
           <Card>
             <CardContent className="p-8">
               <h2 className="text-xl font-bold text-red-400">Exam Expired</h2>
@@ -233,7 +233,7 @@ export default function ExamPage({
     return (
       <>
         <StudentHeader />
-        <div className="mx-auto max-w-2xl px-4 pt-24 text-center">
+        <div className="mx-auto max-w-2xl px-4 pt-20 sm:pt-24 text-center">
           <Card>
             <CardContent className="p-12">
               <h2 className="text-2xl font-bold">No questions yet</h2>
@@ -258,7 +258,7 @@ export default function ExamPage({
   return (
     <>
       <StudentHeader />
-      <div className="mx-auto flex max-w-5xl flex-col items-center px-4 pb-12 pt-24">
+      <div className="mx-auto flex max-w-5xl flex-col items-center px-4 pb-12 pt-20 sm:pt-24">
         {exam.examType === "cq" ? (
           <CqExamView
             exam={exam}

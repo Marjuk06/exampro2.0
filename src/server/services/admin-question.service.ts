@@ -57,4 +57,21 @@ export const adminQuestionService = {
       await examStatsRepository.adjustQuestionCount(q.examId, -1);
     }
   },
+
+  async bulkDelete(items: Array<{ id: string; examId: string }>) {
+    if (!items.length) return;
+    const ids = items.map((i) => i.id);
+    await questionRepository.bulkDelete(ids);
+
+    const examCounts: Record<string, number> = {};
+    for (const item of items) {
+      if (item.examId) {
+        examCounts[item.examId] = (examCounts[item.examId] || 0) + 1;
+      }
+    }
+
+    for (const [examId, count] of Object.entries(examCounts)) {
+      await examStatsRepository.adjustQuestionCount(examId, -count);
+    }
+  },
 };

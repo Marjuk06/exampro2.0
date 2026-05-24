@@ -3,25 +3,9 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion } from "framer-motion";
-import {
-  Activity,
-  BarChart3,
-  Bell,
-  BookOpen,
-  ClipboardList,
-  LayoutDashboard,
-  ListChecks,
-  PenLine,
-  Radio,
-  Settings,
-  Shield,
-  Users,
-} from "lucide-react";
-import { cn } from "@/lib/utils";
-import { Badge } from "@/components/ui/badge";
-import { BetaTag } from "@/components/layout/beta-banner";
+import { Activity, BarChart3, Bell, BookOpen, ClipboardList, LayoutDashboard, ListChecks, PenLine, Radio, Settings, Shield, Users } from "lucide-react";
 
-const navItems = [
+export const navItems = [
   { href: "/admin", label: "Dashboard", icon: LayoutDashboard, exact: true },
   { href: "/admin/analytics", label: "Analytics", icon: BarChart3 },
   { href: "/admin/live", label: "Live Monitor", icon: Radio, badgeKey: "live" },
@@ -34,16 +18,20 @@ const navItems = [
   { href: "/admin/diagnostics", label: "Diagnostics", icon: Activity },
   { href: "/admin/settings", label: "Settings", icon: Settings },
 ];
+import { cn } from "@/lib/utils";
+import { Badge } from "@/components/ui/badge";
+import { BetaTag } from "@/components/layout/beta-banner";
 
 interface AdminSidebarProps {
   counts?: { live?: number; cq?: number; retakes?: number };
+  className?: string;
 }
 
-export function AdminSidebar({ counts }: AdminSidebarProps) {
+export function AdminSidebar({ counts, className }: AdminSidebarProps) {
   const pathname = usePathname();
 
   return (
-    <aside className="glass flex h-screen w-64 shrink-0 flex-col border-r border-white/10">
+    <aside className={cn("glass flex h-screen w-64 shrink-0 flex-col border-r border-white/10", className)}>
       <div className="flex items-center gap-3 border-b border-white/10 p-6">
         <div className="rounded-lg bg-purple-600 p-2 shadow-lg">
           <Shield className="h-5 w-5 text-white" />

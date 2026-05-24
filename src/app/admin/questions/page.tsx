@@ -19,6 +19,18 @@ import { publicPaths } from "@/lib/firestore/public-data";
 import { bulkQuestionsSchema } from "@/lib/validations/exam";
 import { isCqExamType } from "@/lib/firestore/normalize";
 import type { Exam, Question } from "@/types";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { motion, AnimatePresence } from "framer-motion";
 
 export default function AdminQuestionsPage() {
   const { data: exams } = useFirestoreCollection<Exam>([...publicPaths.exams], [
@@ -35,11 +47,28 @@ export default function AdminQuestionsPage() {
   const [opts, setOpts] = useState(["", "", "", ""]);
   const [correctIdx, setCorrectIdx] = useState("0");
   const [bulkJson, setBulkJson] = useState("");
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [isDeletingBulk, setIsDeletingBulk] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
 
   const filtered =
     filterExam && filterExam !== "all"
       ? questions.filter((q) => q.examId === filterExam)
       : questions;
+
+  const toggleSelectAll = () => {
+    if (selectedIds.length === filtered.length) {
+      setSelectedIds([]);
+    } else {
+      setSelectedIds(filtered.map((q) => q.id));
+    }
+  };
+
+  const toggleSelect = (id: string) => {
+    setSelectedIds((prev) =>
+      prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]
+    );
+  };
 
   async function saveQuestion() {
     if (!examId || !text.trim()) {
@@ -99,8 +128,34 @@ export default function AdminQuestionsPage() {
 
   async function deleteQuestion(id: string) {
     const res = await fetch(`/api/admin/questions/${id}`, { method: "DELETE" });
-    if (res.ok) toast.success("Deleted");
-    else toast.error("Delete failed");
+    if (res.ok) {
+      toast.success("Deleted");
+      setSelectedIds((prev) => prev.filter((i) => i !== id));
+    } else toast.error("Delete failed");
+  }
+
+  async function deleteBulk() {
+    if (!selectedIds.length) return;
+    setIsDeletingBulk(true);
+    try {
+      const items = selectedIds.map((id) => {
+        const q = questions.find((q) => q.id === id);
+        return { id, examId: q?.examId ?? "" };
+      });
+      const res = await fetch("/api/admin/questions/bulk-delete", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ items }),
+      });
+      if (!res.ok) throw new Error("Bulk delete failed");
+      toast.success(`Deleted ${selectedIds.length} questions`);
+      setSelectedIds([]);
+      setShowDeleteModal(false);
+    } catch {
+      toast.error("Bulk delete failed");
+    } finally {
+      setIsDeletingBulk(false);
+    }
   }
 
   return (
@@ -121,6 +176,19 @@ export default function AdminQuestionsPage() {
           </SelectContent>
         </Select>
       </div>
+
+      {filtered.length > 0 && (
+        <div className="mb-4 flex items-center gap-2 rounded-lg bg-white/5 p-3">
+          <Checkbox
+            checked={selectedIds.length === filtered.length && filtered.length > 0}
+            onCheckedChange={toggleSelectAll}
+            id="selectAll"
+          />
+          <label htmlFor="selectAll" className="text-sm font-medium cursor-pointer select-none">
+            Select All ({filtered.length})
+          </label>
+        </div>
+      )}
 
       <Card className="mb-6 border-blue-500/50">
         <CardHeader>
@@ -192,9 +260,16 @@ export default function AdminQuestionsPage() {
         {filtered.map((q) => {
           const ex = exams.find((e) => e.id === q.examId);
           return (
-            <Card key={q.id} className="border-l-4 border-blue-500/60">
+            <Card key={q.id} className={`border-l-4 transition-colors ${selectedIds.includes(q.id) ? 'border-red-500/60 bg-red-500/5' : 'border-blue-500/60'}`}>
               <CardContent className="flex justify-between gap-4 p-4">
-                <div>
+                <div className="flex gap-4">
+                  <div className="pt-1">
+                    <Checkbox
+                      checked={selectedIds.includes(q.id)}
+                      onCheckedChange={() => toggleSelect(q.id)}
+                    />
+                  </div>
+                  <div>
                   <span className="text-xs text-blue-400">{ex?.title}</span>
                   <p className="mt-1 whitespace-pre-wrap font-medium">{q.text}</p>
                   {!isCqExamType(ex?.examType) && (
@@ -210,6 +285,7 @@ export default function AdminQuestionsPage() {
                     </div>
                   )}
                 </div>
+                </div>
                 <Button variant="ghost" size="icon" onClick={() => deleteQuestion(q.id)}>
                   <Trash2 className="h-4 w-4 text-red-400" />
                 </Button>
@@ -218,6 +294,56 @@ export default function AdminQuestionsPage() {
           );
         })}
       </div>
+
+      {/* Floating Action Bar */}
+      <AnimatePresence>
+        {selectedIds.length > 0 && (
+          <motion.div
+            initial={{ y: 100, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: 100, opacity: 0 }}
+            className="fixed bottom-6 left-1/2 z-50 flex -translate-x-1/2 items-center gap-4 rounded-full border border-white/10 bg-black/80 px-6 py-4 shadow-2xl backdrop-blur-lg"
+          >
+            <span className="font-medium text-white">
+              {selectedIds.length} question{selectedIds.length > 1 ? "s" : ""} selected
+            </span>
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={() => setShowDeleteModal(true)}
+              className="gap-2 rounded-full font-bold"
+            >
+              <Trash2 className="h-4 w-4" />
+              Delete Selected
+            </Button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <AlertDialog open={showDeleteModal} onOpenChange={setShowDeleteModal}>
+        <AlertDialogContent className="border-red-500/20 bg-background/95 backdrop-blur-xl">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete {selectedIds.length}{" "}
+              question{selectedIds.length > 1 ? "s" : ""} from the database and recalculate exam counts.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeletingBulk}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-red-600 hover:bg-red-700"
+              onClick={(e) => {
+                e.preventDefault();
+                deleteBulk();
+              }}
+              disabled={isDeletingBulk}
+            >
+              {isDeletingBulk ? "Deleting..." : "Yes, delete everything"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

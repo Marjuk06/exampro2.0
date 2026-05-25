@@ -96,7 +96,7 @@ export const POST = withApiHandler(async (request) => {
     { merge: true }
   );
 
-  await db.collection(paths.results()).add({
+  const resultRef = await db.collection(paths.results()).add({
     uid: session.uid,
     examId,
     examType: "cq",
@@ -113,5 +113,5 @@ export const POST = withApiHandler(async (request) => {
 
   await db.doc(paths.liveSession(sessionId)).delete().catch(() => {});
 
-  return jsonOk({ ok: true, imageCount: imageUrls.length });
+  return jsonOk({ ok: true, resultId: resultRef.id, imageCount: imageUrls.length });
 }, { rateLimitKey: (req) => `cq:${req.headers.get("x-forwarded-for") || "unknown"}` });

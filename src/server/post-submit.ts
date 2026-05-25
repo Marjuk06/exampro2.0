@@ -154,7 +154,7 @@ export async function processMcqSubmission(
           title: "Exam submitted",
           message: formatRankMessage(ranking.rank, ranking.participantCount, ranking.percentile),
           type: "success",
-          link: `/exam/${examId}`,
+          link: `/exam/${examId}/result/${resultId}`,
         })
       ];
       if (ranking.rankDelta != null && ranking.rankDelta > 0) {
@@ -162,7 +162,7 @@ export async function processMcqSubmission(
           title: "Rank improved!",
           message: `You moved up ${ranking.rankDelta} place(s) to #${ranking.rank}`,
           type: "success",
-          link: `/exam/${examId}`,
+          link: `/exam/${examId}/result/${resultId}`,
         }));
       }
       if (newBadges.length > 0) {

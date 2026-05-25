@@ -154,7 +154,16 @@ function ClanTab() {
 // ─── Challenges Tab ───────────────────────────────────────────────────────────
 function ChallengesTab() {
   const [studentId, setStudentId] = useState("");
+  const [selectedExamId, setSelectedExamId] = useState("");
   const qc = useQueryClient();
+
+  // Fetch available exams for the challenge selector
+  const { data: dashboardData } = useQuery({
+    queryKey: ["student", "dashboard"],
+    queryFn: () => fetchJson<{ exams: Array<{ id: string; title: string }> }>("/api/student/dashboard"),
+    staleTime: 60_000,
+  });
+  const availableExams = dashboardData?.exams ?? [];
 
   const { data, isLoading } = useQuery({
     queryKey: queryKeys.challenges,
@@ -168,12 +177,15 @@ function ChallengesTab() {
   });
 
   const challengeMut = useMutation({
-    mutationFn: () =>
-      fetchJson("/api/student/challenges", {
+    mutationFn: () => {
+      if (!selectedExamId) throw new Error("Please select an exam first");
+      if (!studentId.trim()) throw new Error("Please enter a student ID");
+      return fetchJson("/api/student/challenges", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "create", challengedStudentId: studentId.trim(), wagerXp: 100, examId: "any" }),
-      }),
+        body: JSON.stringify({ action: "create", challengedStudentId: studentId.trim(), wagerXp: 100, examId: selectedExamId }),
+      });
+    },
     onSuccess: () => {
       toast.success("Challenge sent!");
       void qc.invalidateQueries({ queryKey: queryKeys.challenges });
@@ -203,19 +215,32 @@ function ChallengesTab() {
   return (
     <div className="space-y-4">
       {/* Send challenge */}
-      <div className="flex gap-2">
-        <Input
-          placeholder="Student ID to challenge"
-          value={studentId}
-          onChange={(e) => setStudentId(e.target.value)}
-        />
+      <div className="space-y-2">
+        <div className="flex flex-wrap gap-2">
+          <Input
+            placeholder="Student ID to challenge"
+            value={studentId}
+            onChange={(e) => setStudentId(e.target.value)}
+            className="min-w-[160px] flex-1"
+          />
+          <select
+            value={selectedExamId}
+            onChange={(e) => setSelectedExamId(e.target.value)}
+            className="flex-1 min-w-[160px] rounded-md border border-white/10 bg-background px-3 py-2 text-sm text-white"
+          >
+            <option value="">Select exam…</option>
+            {availableExams.map((e) => (
+              <option key={e.id} value={e.id}>{e.title}</option>
+            ))}
+          </select>
+        </div>
         <Button
           onClick={() => challengeMut.mutate()}
-          disabled={!studentId.trim() || challengeMut.isPending}
-          className="shrink-0 bg-orange-600 hover:bg-orange-700"
+          disabled={!studentId.trim() || !selectedExamId || challengeMut.isPending}
+          className="w-full bg-orange-600 hover:bg-orange-700"
         >
           <Swords className="mr-1 h-4 w-4" />
-          Challenge
+          {challengeMut.isPending ? "Sending…" : "Send Challenge"}
         </Button>
       </div>
 

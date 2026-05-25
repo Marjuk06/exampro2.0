@@ -41,7 +41,7 @@ export const PATCH = withApiHandler(async (request) => {
 
   const body = await request.json();
   const db = getAdminDb();
-  const allowed = ["bio", "favoriteSubjects", "name"] as const;
+  const allowed = ["bio", "favoriteSubjects", "name", "avatarUrl"] as const;
   const updates: Record<string, unknown> = { updatedAt: Date.now() };
   for (const key of allowed) {
     if (body[key] !== undefined) updates[key] = body[key];

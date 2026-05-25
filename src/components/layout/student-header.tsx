@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { Layers, Menu, X, User } from "lucide-react";
 import { useAuth } from "@/components/providers/auth-provider";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ThemeToggle } from "@/components/layout/theme-toggle";
 import { LogoutButton } from "@/components/layout/logout-button";
 import { NotificationBell } from "@/components/student/notification-bell";
@@ -44,6 +44,7 @@ export function StudentHeader() {
               className="glass flex items-center gap-3 rounded-full px-4 py-2 hover:bg-white/5 transition-colors"
             >
               <Avatar className="h-8 w-8">
+                <AvatarImage src={profile.avatarUrl} alt={profile.name} />
                 <AvatarFallback className="bg-gradient-to-tr from-blue-500 to-purple-500 text-sm font-bold text-white">
                   {(profile.name?.trim()?.charAt(0) ?? "?").toUpperCase()}
                 </AvatarFallback>
@@ -85,6 +86,7 @@ export function StudentHeader() {
                   className="flex items-center gap-3 rounded-xl border border-white/10 bg-white/5 p-4 shadow-sm"
                 >
                   <Avatar className="h-10 w-10 border border-blue-500/30">
+                    <AvatarImage src={profile.avatarUrl} alt={profile.name} />
                     <AvatarFallback className="bg-gradient-to-tr from-blue-500 to-purple-500 text-lg font-bold text-white">
                       {(profile.name?.trim()?.charAt(0) ?? "?").toUpperCase()}
                     </AvatarFallback>

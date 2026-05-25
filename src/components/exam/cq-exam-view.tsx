@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useState } from "react";
+import { useRouter } from "next/navigation";
 
 import { Camera, CloudUpload, Upload } from "lucide-react";
 import { toast } from "sonner";
@@ -19,7 +20,7 @@ interface CqExamViewProps {
 }
 
 export function CqExamView({ exam, questions, endTime }: CqExamViewProps) {
-  // router unused, but keeping import for diff simplicity
+  const router = useRouter();
   const { reset } = useExamStore();
   const [phase, setPhase] = useState<"writing" | "upload">("writing");
   const [files, setFiles] = useState<File[]>([]);
@@ -43,10 +44,15 @@ export function CqExamView({ exam, questions, endTime }: CqExamViewProps) {
         body: formData,
       });
       if (!res.ok) throw new Error("Upload failed");
+      const data = await res.json();
       reset();
       toast.success("CQ Exam submitted successfully!");
-      // Force a hard reload so the parent component fetches the new result
-      window.location.reload();
+      // Redirect to the dedicated result page
+      if (data.resultId) {
+        router.push(`/exam/${exam.id}/result/${data.resultId}`);
+      } else {
+        window.location.reload();
+      }
     } catch {
       toast.error("Save failed. Try smaller images.");
     } finally {

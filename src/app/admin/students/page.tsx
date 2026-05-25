@@ -97,7 +97,7 @@ export default function AdminStudentsPage() {
                   <tr key={s.uid} className="hover:bg-white/5 transition-colors">
                     <td className="p-4 font-medium text-white">{s.name}</td>
                     <td className="p-4 text-blue-400 font-mono text-sm">{s.studentId}</td>
-                    <td className="p-4 text-muted-foreground text-sm">{s.email || "-"}</td>
+                    <td className="p-4 text-muted-foreground text-sm">{s.email && s.email.trim() ? s.email : <span className="text-white/30">—</span>}</td>
                     <td className="p-4 text-center sm:text-left">{s.examsCompleted}</td>
                     <td className="p-4">
                       <span className="inline-flex items-center gap-1.5 rounded-full bg-purple-500/20 px-2.5 py-0.5 text-xs font-semibold text-purple-400">

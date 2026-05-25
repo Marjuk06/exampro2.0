@@ -74,7 +74,7 @@ export async function POST(request: Request) {
         name: decoded.name ?? decoded.email?.split("@")[0] ?? "Student",
         studentId: generateStudentId(),
         role,
-        avatarUrl: decoded.picture ?? "",
+        avatarUrl: decoded.picture || `https://api.dicebear.com/9.x/adventurer/svg?seed=${decoded.uid}`,
         createdAt: now,
         updatedAt: now,
         xp: 0,
@@ -100,12 +100,24 @@ export async function POST(request: Request) {
       await userRepository.setProfile(decoded.uid, profile);
       await syncPublicProfile(db, profile.uid);
     } else {
+      // Build the update payload
+      const updatePayload: Parameters<typeof userRepository.updateProfile>[1] = {};
       if (profile.role !== role) {
-        await userRepository.updateProfile(decoded.uid, { role });
+        updatePayload.role = role;
         profile = { ...profile, role };
-      } else {
-        await userRepository.updateProfile(decoded.uid, { updatedAt: now });
       }
+      // Sync email from OAuth token if missing or empty
+      if (decoded.email && (!profile.email || !profile.email.trim())) {
+        updatePayload.email = decoded.email;
+        profile = { ...profile, email: decoded.email };
+      }
+      // Sync avatar if missing or empty
+      if (!profile.avatarUrl) {
+        const avatarToSet = decoded.picture || `https://api.dicebear.com/9.x/adventurer/svg?seed=${decoded.uid}`;
+        updatePayload.avatarUrl = avatarToSet;
+        profile = { ...profile, avatarUrl: avatarToSet };
+      }
+      await userRepository.updateProfile(decoded.uid, { ...updatePayload, updatedAt: now });
       const { updateLoginStreak } = await import("@/server/gamification");
       await updateLoginStreak(db, decoded.uid);
       const refreshed = await userRepository.getProfile(decoded.uid);

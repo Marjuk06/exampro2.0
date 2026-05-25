@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useRef } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -11,13 +11,12 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Download, FileText, Loader2, CheckCircle2, FileSpreadsheet } from "lucide-react";
+import { Download, FileText, Loader2, CheckCircle2, FileSpreadsheet, Trash2 } from "lucide-react";
 import { useAdminResults } from "@/hooks/queries/use-admin-results";
 import { useFirestoreCollection, limit, orderBy } from "@/hooks/use-firestore-collection";
 import { publicPaths } from "@/lib/firestore/public-data";
 import { LeaderboardPdfTemplate } from "@/components/admin/leaderboard-pdf-template";
 import { motion } from "framer-motion";
-import { useRef } from "react";
 import {
   formatExamTypeLabel,
   formatResultScore,
@@ -202,19 +201,20 @@ export default function AdminResultsPage() {
               <th className="border-b border-white/10 bg-black/40 p-4">Type</th>
               <th className="border-b border-white/10 bg-black/40 p-4">Score</th>
               <th className="border-b border-white/10 bg-black/40 p-4">Date</th>
+              <th className="border-b border-white/10 bg-black/40 p-4 w-12"></th>
             </tr>
           </thead>
           <tbody>
             {isLoading && (
               <tr>
-                <td colSpan={6} className="p-8 text-center text-muted-foreground">
+                <td colSpan={7} className="p-8 text-center text-muted-foreground">
                   Loading results…
                 </td>
               </tr>
             )}
             {!isLoading && results.length === 0 && (
               <tr>
-                <td colSpan={6} className="p-8 text-center text-muted-foreground">
+                <td colSpan={7} className="p-8 text-center text-muted-foreground">
                   No results found.
                 </td>
               </tr>
@@ -281,35 +281,94 @@ function ResultRow({
   const scoreText = formatResultScore(r.score);
   const isPending = isCqExamType(r.examType) && isPendingCqScore(r.score);
   const submittedAt = getSubmittedAtMs(r.submittedAt);
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [deleted, setDeleted] = useState(false);
+
+  async function handleDelete() {
+    setDeleting(true);
+    try {
+      const res = await fetch(`/api/admin/results/${r.id}`, { method: "DELETE" });
+      if (!res.ok) throw new Error("Delete failed");
+      setDeleted(true);
+      const { toast } = await import("sonner");
+      toast.success("Result deleted");
+    } catch {
+      const { toast } = await import("sonner");
+      toast.error("Failed to delete result");
+    } finally {
+      setDeleting(false);
+      setConfirmOpen(false);
+    }
+  }
+
+  if (deleted) return null;
 
   return (
-    <tr className="transition hover:bg-white/5">
-      <td className="border-b border-white/5 p-4 text-sm font-medium text-blue-400">
-        {getExamTitle(exams, r.examId)}
-      </td>
-      <td className="border-b border-white/5 p-4">{profile.name}</td>
-      <td className="border-b border-white/5 p-4 text-sm text-muted-foreground">
-        {profile.studentId}
-      </td>
-      <td className="border-b border-white/5 p-4">
-        <Badge variant={isCqExamType(r.examType) ? "purple" : "default"}>
-          {examTypeLabel}
-        </Badge>
-      </td>
-      <td
-        className={`border-b border-white/5 p-4 font-bold ${
-          isPending ? "text-yellow-400" : "text-green-400"
-        }`}
-      >
-        {scoreText}
-      </td>
-      <td className="border-b border-white/5 p-4 text-sm text-muted-foreground">
-        {submittedAt > 0 ? (
-          <ClientDate timestamp={submittedAt} options={{ dateStyle: "medium" }} />
-        ) : (
-          "—"
-        )}
-      </td>
-    </tr>
+    <>
+      <tr className="transition hover:bg-white/5">
+        <td className="border-b border-white/5 p-4 text-sm font-medium text-blue-400">
+          {getExamTitle(exams, r.examId)}
+        </td>
+        <td className="border-b border-white/5 p-4">{profile.name}</td>
+        <td className="border-b border-white/5 p-4 text-sm text-muted-foreground">
+          {profile.studentId}
+        </td>
+        <td className="border-b border-white/5 p-4">
+          <Badge variant={isCqExamType(r.examType) ? "purple" : "default"}>
+            {examTypeLabel}
+          </Badge>
+        </td>
+        <td
+          className={`border-b border-white/5 p-4 font-bold ${
+            isPending ? "text-yellow-400" : "text-green-400"
+          }`}
+        >
+          {scoreText}
+        </td>
+        <td className="border-b border-white/5 p-4 text-sm text-muted-foreground">
+          {submittedAt > 0 ? (
+            <ClientDate timestamp={submittedAt} options={{ dateStyle: "medium" }} />
+          ) : (
+            "—"
+          )}
+        </td>
+        <td className="border-b border-white/5 p-4">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-7 px-2 text-red-400 hover:bg-red-500/10 hover:text-red-300"
+            onClick={() => setConfirmOpen(true)}
+            disabled={deleting}
+          >
+            {deleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+          </Button>
+        </td>
+      </tr>
+
+      {/* Confirm delete dialog */}
+      <Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Delete Result?</DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground">
+            This will permanently delete the result for{" "}
+            <span className="font-medium text-white">{profile.name}</span> on{" "}
+            <span className="font-medium text-white">{getExamTitle(exams, r.examId)}</span>.
+            This action cannot be undone.
+          </p>
+          <div className="mt-4 flex justify-end gap-2">
+            <Button variant="outline" onClick={() => setConfirmOpen(false)} disabled={deleting}>
+              Cancel
+            </Button>
+            <Button variant="destructive" onClick={handleDelete} disabled={deleting}>
+              {deleting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Trash2 className="mr-2 h-4 w-4" />}
+              Delete
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }

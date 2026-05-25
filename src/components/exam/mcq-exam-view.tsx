@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-
+import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { CheckCircle2, Hand, Send, Shuffle } from "lucide-react";
 import { LiveRankWidget } from "@/components/exam/live-rank-widget";
@@ -25,7 +25,7 @@ interface McqExamViewProps {
 }
 
 export function McqExamView({ exam, questions, endTime, sessionId }: McqExamViewProps) {
-  // router unused, but keeping import for diff simplicity
+  const router = useRouter();
   const { profile } = useAuth();
   const { answers, bookmarks, setAnswer, toggleBookmark, reset } = useExamStore();
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -68,14 +68,18 @@ export function McqExamView({ exam, questions, endTime, sessionId }: McqExamView
       } else {
         toast.success("Exam submitted successfully!");
       }
-      // Force a hard reload so the parent component fetches the new result
-      window.location.reload();
+      // Redirect to the dedicated result page
+      if (data.resultId) {
+        router.push(`/exam/${exam.id}/result/${data.resultId}`);
+      } else {
+        window.location.reload();
+      }
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Submission failed");
     } finally {
       setSubmitting(false);
     }
-  }, [submitting, exam.id, answers, bookmarks, reset, startedAt]);
+  }, [submitting, exam.id, answers, bookmarks, reset, startedAt, router]);
 
   const onExpire = useCallback(() => {
     toast.info("Time's up! Auto-submitting...");

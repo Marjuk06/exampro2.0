@@ -8,6 +8,7 @@ const schema = z.object({
 });
 
 export const PATCH = withApiHandler(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   async (request, context: any) => {
     await requireAdmin();
     const data = await parseJson(request, schema);

@@ -50,8 +50,8 @@ export default function AdminStudentsPage() {
       setAddForm({ name: "", email: "", password: "" });
       setRefreshTrigger(prev => prev + 1);
       toast.success("Student added successfully!");
-    } catch (err: any) {
-      setAddError(err.message);
+    } catch (err: unknown) {
+      setAddError((err as Error).message);
     } finally {
       setIsAdding(false);
     }

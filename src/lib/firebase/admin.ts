@@ -40,7 +40,7 @@ export function getAdminDb(): Firestore {
   adminDb = getFirestore(getAdminApp());
   try {
     adminDb.settings({ ignoreUndefinedProperties: true });
-  } catch (error) {
+  } catch {
     // Ignore the "Firestore has already been initialized" error in development due to HMR
   }
   return adminDb;

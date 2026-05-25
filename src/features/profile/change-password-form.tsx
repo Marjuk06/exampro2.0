@@ -48,12 +48,12 @@ export function ChangePasswordForm() {
       setCurrentPassword("");
       setNewPassword("");
       setRepeatPassword("");
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error(err);
-      if (err.code === "auth/invalid-credential") {
+      if ((err as Error & { code?: string }).code === "auth/invalid-credential") {
         toast.error("Incorrect current password.");
       } else {
-        toast.error(err.message || "Failed to update password.");
+        toast.error((err as Error).message || "Failed to update password.");
       }
     } finally {
       setLoading(false);

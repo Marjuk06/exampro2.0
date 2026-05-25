@@ -14,6 +14,7 @@ export default function AdminRetakesPage() {
 
   useEffect(() => {
     fetchRequests();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filter]);
 
   const fetchRequests = async () => {
@@ -24,8 +25,8 @@ export default function AdminRetakesPage() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
       setRequests(data);
-    } catch (err: any) {
-      toast.error(err.message || "Failed to fetch retake requests");
+    } catch (err: unknown) {
+      toast.error((err as Error).message || "Failed to fetch retake requests");
     } finally {
       setLoading(false);
     }
@@ -42,8 +43,8 @@ export default function AdminRetakesPage() {
       if (!res.ok) throw new Error("Failed to update status");
       toast.success(`Request ${status} successfully`);
       fetchRequests();
-    } catch (err: any) {
-      toast.error(err.message);
+    } catch (err: unknown) {
+      toast.error((err as Error).message);
     } finally {
       setActionLoading(null);
     }
@@ -56,7 +57,7 @@ export default function AdminRetakesPage() {
         <select 
           className="p-2 rounded bg-secondary text-secondary-foreground border border-border"
           value={filter}
-          onChange={(e) => setFilter(e.target.value as any)}
+          onChange={(e) => setFilter(e.target.value as "pending" | "approved" | "rejected" | "all")}
         >
           <option value="pending">Pending</option>
           <option value="approved">Approved</option>

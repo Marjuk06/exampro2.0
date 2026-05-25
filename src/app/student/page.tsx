@@ -11,7 +11,6 @@ import { PracticePanel } from "@/components/student/practice-panel";
 import { RevisionPanel } from "@/components/student/revision-panel";
 import { SocialPanel } from "@/components/student/social-panel";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Skeleton } from "@/components/ui/skeleton";
 import { ErrorBoundary } from "@/components/error-boundary";
 
 function StudentTabs() {

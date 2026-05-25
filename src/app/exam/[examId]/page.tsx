@@ -121,7 +121,7 @@ export default function ExamPage({
         () => {}
       );
     };
-  }, [exam, profile, myResult, examId, setSession, setExamId]);
+  }, [exam, profile, myResult, examId, setSession, setExamId, isRetake]);
 
   if (authLoading || loading || resultLoading) {
     return (

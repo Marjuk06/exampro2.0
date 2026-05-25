@@ -77,9 +77,9 @@ export default function LoginPage() {
     try {
       await sendPasswordResetEmail(getFirebaseAuth(), email);
       toast.success("Password reset email sent! Check your inbox.");
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error(err);
-      toast.error(err.message || "Failed to send reset email.");
+      toast.error((err as Error).message || "Failed to send reset email.");
     } finally {
       setLoading(false);
     }

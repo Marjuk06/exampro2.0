@@ -2,7 +2,6 @@ import { getAdminAuth, getAdminDb } from "@/lib/firebase/admin";
 import { requireAdmin } from "@/server/auth/require-admin";
 import { jsonOk, jsonError, withApiHandler } from "@/server/api/handler";
 import { ApiError } from "@/server/api/response";
-import { paths } from "@/lib/firebase/paths";
 import { userRepository } from "@/server/repositories/user.repository";
 import { syncPublicProfile } from "@/server/gamification";
 import type { UserProfile } from "@/types";
@@ -70,8 +69,8 @@ export const POST = withApiHandler(async (request) => {
     await syncPublicProfile(db, uid);
 
     return jsonOk({ studentId, uid });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Error creating student:", error);
-    return jsonError(new ApiError(500, error.message || "Failed to create student"));
+    return jsonError(new ApiError(500, (error as Error).message || "Failed to create student"));
   }
 });

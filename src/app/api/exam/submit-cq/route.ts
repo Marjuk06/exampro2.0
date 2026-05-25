@@ -1,8 +1,5 @@
-import { NextResponse } from "next/server";
-import { getServerSession } from "@/lib/auth/session";
 import { getAdminDb, getAdminStorage } from "@/lib/firebase/admin";
 import { paths } from "@/lib/firebase/paths";
-import { rateLimit } from "@/lib/api/rate-limit";
 import { MAX_CQ_IMAGES } from "@/lib/constants";
 import { optimizeImageBuffer } from "@/lib/media/optimize-image";
 

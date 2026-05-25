@@ -142,7 +142,6 @@ export const ResultPdfTemplate = forwardRef<HTMLDivElement, ResultPdfTemplatePro
               // MCQ Logic
               const isCorrect = studentAns === q.correctIndex;
               const isSkipped = studentAns === undefined;
-              const statusColor = isCorrect ? (isDark ? "#059669" : "#059669") : isSkipped ? (isDark ? "#4b5563" : "#6b7280") : (isDark ? "#dc2626" : "#dc2626");
               const statusText = isCorrect ? "Correct" : isSkipped ? "Skipped" : "Incorrect";
               const statusBg = isCorrect ? (isDark ? "#064e3b40" : "#ecfdf5") : isSkipped ? (isDark ? "#1f293740" : "#f3f4f6") : (isDark ? "#7f1d1d40" : "#fef2f2");
               const statusBorder = isCorrect ? (isDark ? "#065f46" : "#a7f3d0") : isSkipped ? (isDark ? "#374151" : "#e5e7eb") : (isDark ? "#991b1b" : "#fecaca");

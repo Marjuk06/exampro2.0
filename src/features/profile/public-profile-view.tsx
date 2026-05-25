@@ -5,7 +5,6 @@ import { motion } from "framer-motion";
 import { Award, Flame, Star, Trophy, Camera, Loader2, Shuffle, RotateCcw } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { useAuth } from "@/components/providers/auth-provider";
 import { Skeleton } from "@/components/ui/skeleton";

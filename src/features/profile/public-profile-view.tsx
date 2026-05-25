@@ -2,9 +2,12 @@
 
 import { useEffect, useState, type ReactNode } from "react";
 import { motion } from "framer-motion";
-import { Award, Flame, Star, Trophy } from "lucide-react";
+import { Award, Flame, Star, Trophy, Camera, Loader2, Shuffle } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
+import { useAuth } from "@/components/providers/auth-provider";
 import { Skeleton } from "@/components/ui/skeleton";
 import { xpProgressInLevel } from "@/features/gamification/xp";
 import { ACHIEVEMENTS } from "@/features/gamification/achievements";
@@ -17,6 +20,9 @@ export function PublicProfileView({ studentId }: { studentId: string }) {
   >([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { profile: loggedInProfile, refreshProfile } = useAuth();
+  const [updatingAvatar, setUpdatingAvatar] = useState(false);
+  const isOwner = loggedInProfile?.uid === profile?.uid;
 
   useEffect(() => {
     fetch(`/api/profile/${encodeURIComponent(studentId)}`)
@@ -38,6 +44,66 @@ export function PublicProfileView({ studentId }: { studentId: string }) {
       navigator.share({ title: profile?.name ?? "Profile", url }).catch(() => {});
     } else {
       navigator.clipboard.writeText(url);
+      toast.success("Profile link copied!");
+    }
+  }
+
+  async function handleAvatarUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("Image must be less than 5MB");
+      return;
+    }
+    setUpdatingAvatar(true);
+    try {
+      const formData = new FormData();
+      formData.append("avatar", file);
+      const res = await fetch("/api/student/profile", {
+        method: "PATCH",
+        body: formData,
+      });
+      if (!res.ok) throw new Error("Failed to upload avatar");
+      await fetchProfile(); // refresh local profile
+      refreshProfile(); // refresh auth session profile
+      toast.success("Avatar updated!");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Error uploading avatar");
+    } finally {
+      setUpdatingAvatar(false);
+    }
+  }
+
+  async function handleRandomizeAvatar() {
+    setUpdatingAvatar(true);
+    try {
+      const randomSeed = Math.random().toString(36).substring(7);
+      const newUrl = `https://api.dicebear.com/9.x/adventurer/svg?seed=${randomSeed}`;
+      const res = await fetch("/api/student/profile", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ avatarUrl: newUrl }),
+      });
+      if (!res.ok) throw new Error("Failed to update avatar");
+      await fetchProfile();
+      refreshProfile();
+      toast.success("Avatar randomized!");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Error updating avatar");
+    } finally {
+      setUpdatingAvatar(false);
+    }
+  }
+
+  async function fetchProfile() {
+    try {
+      const r = await fetch(`/api/profile/${encodeURIComponent(studentId)}`);
+      if (!r.ok) throw new Error("Profile not found");
+      const d = await r.json();
+      setProfile(d.profile);
+      setRecentRanks(d.recentRanks ?? []);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Error");
     }
   }
 
@@ -70,11 +136,30 @@ export function PublicProfileView({ studentId }: { studentId: string }) {
       <Card className="overflow-hidden border-purple-500/20">
         <div className="h-24 bg-gradient-to-r from-blue-600/40 via-purple-600/40 to-pink-600/40" />
         <CardContent className="relative px-6 pb-6 pt-0">
-          <Avatar className="-mt-12 h-24 w-24 border-4 border-background">
-            <AvatarFallback className="bg-gradient-to-tr from-blue-500 to-purple-500 text-2xl font-bold">
-              {(profile.name?.charAt(0) ?? "?").toUpperCase()}
-            </AvatarFallback>
-          </Avatar>
+          <div className="relative -mt-12 mb-4 h-24 w-24">
+            <Avatar className="h-24 w-24 border-4 border-background shadow-xl">
+              <AvatarImage src={profile.avatarUrl} alt={profile.name} className="object-cover bg-white" />
+              <AvatarFallback className="bg-gradient-to-tr from-blue-500 to-purple-500 text-2xl font-bold">
+                {(profile.name?.charAt(0) ?? "?").toUpperCase()}
+              </AvatarFallback>
+            </Avatar>
+            {isOwner && (
+              <div className="absolute -bottom-2 -right-2 flex gap-1">
+                <label className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-full bg-blue-600 text-white shadow hover:bg-blue-700 transition disabled:opacity-50">
+                  {updatingAvatar ? <Loader2 className="h-4 w-4 animate-spin" /> : <Camera className="h-4 w-4" />}
+                  <input type="file" accept="image/*" className="hidden" onChange={handleAvatarUpload} disabled={updatingAvatar} />
+                </label>
+                <button
+                  onClick={handleRandomizeAvatar}
+                  disabled={updatingAvatar}
+                  className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-full bg-purple-600 text-white shadow hover:bg-purple-700 transition disabled:opacity-50"
+                  title="Randomize Avatar"
+                >
+                  <Shuffle className="h-4 w-4" />
+                </button>
+              </div>
+            )}
+          </div>
           <h1 className="mt-4 text-2xl font-bold">{profile.name}</h1>
           <p className="text-muted-foreground">{profile.studentId}</p>
           <button

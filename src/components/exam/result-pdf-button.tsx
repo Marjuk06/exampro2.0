@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils";
 import type { Exam, ExamResult, Question } from "@/types";
 import { ResultPdfTemplate } from "@/components/exam/result-pdf-template";
 import { useReactToPrint } from "react-to-print";
+import { usePublicSettings } from "@/hooks/queries/use-public-settings";
 
 interface ResultPdfButtonProps {
   exam: Exam;
@@ -20,6 +21,7 @@ export function ResultPdfButton({ exam, result, questions }: ResultPdfButtonProp
   const [theme, setTheme] = useState<"light" | "dark">("light");
   const [isOpen, setIsOpen] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
+  const { settings } = usePublicSettings();
 
   const handlePrint = useReactToPrint({
     contentRef: pdfRef,
@@ -82,6 +84,11 @@ export function ResultPdfButton({ exam, result, questions }: ResultPdfButtonProp
                 theme === "dark" ? "border-blue-500 bg-blue-500/5" : "border-muted hover:border-muted-foreground"
               )}
             >
+              {settings.betaMode && (
+                <div className="absolute -top-3 right-4 rounded-full bg-blue-500 px-2 py-0.5 text-[10px] font-bold tracking-widest text-white shadow-sm border border-blue-400">
+                  BETA
+                </div>
+              )}
               <div className="flex h-32 w-24 flex-col gap-2 rounded bg-slate-900 p-2 shadow-sm ring-1 ring-slate-800">
                 <div className="h-2 w-1/2 rounded bg-blue-400" />
                 <div className="h-1 w-3/4 rounded bg-slate-600" />

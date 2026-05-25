@@ -96,7 +96,7 @@ export default async function ResultPage({ params }: Props) {
 export async function generateMetadata({ params }: Props) {
   const { examId } = await params;
   return {
-    title: "Exam Result — MCQPro",
+    title: "Exam Result",
     description: `View your exam result for ${examId}`,
   };
 }

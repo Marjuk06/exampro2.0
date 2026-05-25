@@ -6,10 +6,11 @@ interface ResultPdfTemplateProps {
   exam: Exam;
   result: ExamResult;
   questions: Question[];
+  theme?: "light" | "dark";
 }
 
 export const ResultPdfTemplate = forwardRef<HTMLDivElement, ResultPdfTemplateProps>(
-  ({ exam, result, questions }, ref) => {
+  ({ exam, result, questions, theme = "light" }, ref) => {
     const isCq = isCqExamType(exam.examType);
     const scoreText = formatResultScore(result.score);
     const pct = result.percentage ?? 0;
@@ -18,17 +19,26 @@ export const ResultPdfTemplate = forwardRef<HTMLDivElement, ResultPdfTemplatePro
     const minutes = Math.floor(timeSpent / 60);
     const seconds = timeSpent % 60;
 
+    const isDark = theme === "dark";
+    const bgPrimary = isDark ? "#0f172a" : "#ffffff";
+    const bgSecondary = isDark ? "#1e293b" : "#f9fafb";
+    const textPrimary = isDark ? "#f8fafc" : "#000000";
+    const textSecondary = isDark ? "#cbd5e1" : "#4b5563";
+    const textMuted = isDark ? "#94a3b8" : "#6b7280";
+    const borderPrimary = isDark ? "#334155" : "#e5e7eb";
+    const accentPrimary = isDark ? "#60a5fa" : "#1e3a8a";
+
     return (
       <div
         ref={ref}
         style={{
-          width: "210mm",
-          backgroundColor: "#ffffff",
-          color: "#000000",
+          width: "100%",
+          maxWidth: "186mm",
+          backgroundColor: bgPrimary,
+          color: textPrimary,
           fontFamily: "Inter, system-ui, sans-serif",
-          padding: "20mm 15mm",
           margin: "0 auto",
-          boxSizing: "border-box",
+          boxSizing: "border-box"
         }}
       >
         <style>
@@ -36,165 +46,179 @@ export const ResultPdfTemplate = forwardRef<HTMLDivElement, ResultPdfTemplatePro
             @media print {
               @page {
                 size: A4 portrait;
-                margin: 0;
+                margin: 14mm 12mm 14mm 12mm;
               }
-              body {
+              html, body {
                 -webkit-print-color-adjust: exact !important;
                 print-color-adjust: exact !important;
-                margin: 0;
-                background: #ffffff;
+                background: ${bgPrimary} !important;
+                height: 100%;
               }
               .no-break {
-                page-break-inside: avoid;
-                break-inside: avoid;
+                page-break-inside: avoid !important;
+                break-inside: avoid-page !important;
+                display: block;
               }
             }
           `}
         </style>
 
-        {/* Header Section */}
-        <div style={{ borderBottom: "2px solid #e5e7eb", paddingBottom: "15px", marginBottom: "25px", display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-          <div>
-            <h1 style={{ fontSize: "28px", fontWeight: "bold", margin: 0, color: "#1e3a8a", lineHeight: 1.2 }}>{exam.title}</h1>
-            <p style={{ fontSize: "14px", color: "#6b7280", marginTop: "4px", margin: 0 }}>Official Exam Result & Performance Report</p>
-          </div>
-          <div style={{ textAlign: "right" }}>
-            <div style={{ fontSize: "20px", fontWeight: "900", color: "#111827", letterSpacing: "-0.5px" }}>MCQ Pro</div>
-            <p style={{ fontSize: "12px", color: "#6b7280", margin: 0 }}>Exam Center Hub</p>
-          </div>
-        </div>
+        <div style={{ padding: "0" }}>
 
-        {/* Summary Cards */}
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "20px", marginBottom: "40px" }}>
-          {/* Student Info */}
-          <div style={{ padding: "16px", borderRadius: "8px", backgroundColor: "#f9fafb", border: "1px solid #e5e7eb" }}>
-            <h3 style={{ margin: "0 0 12px 0", fontSize: "14px", color: "#6b7280", textTransform: "uppercase", letterSpacing: "0.5px" }}>Candidate Information</h3>
-            <p style={{ margin: "4px 0", fontSize: "20px", fontWeight: "bold", color: "#111827" }}>{result.studentProfile?.name || "Unknown Student"}</p>
-            <p style={{ margin: "4px 0", fontSize: "14px", color: "#4b5563" }}>ID: {result.studentProfile?.studentId || "—"}</p>
-            <p style={{ margin: "4px 0", fontSize: "14px", color: "#4b5563" }}>Date: {new Date(submittedAt).toLocaleString()}</p>
-          </div>
-
-          {/* Performance Info */}
-          <div style={{ padding: "16px", borderRadius: "8px", backgroundColor: "#eff6ff", border: "1px solid #bfdbfe" }}>
-            <h3 style={{ margin: "0 0 12px 0", fontSize: "14px", color: "#1d4ed8", textTransform: "uppercase", letterSpacing: "0.5px" }}>Performance Summary</h3>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
-              <div>
-                <p style={{ margin: 0, fontSize: "12px", color: "#3b82f6" }}>Final Score</p>
-                <p style={{ margin: 0, fontSize: "22px", fontWeight: "bold", color: "#1e40af" }}>{scoreText}</p>
-              </div>
-              <div>
-                <p style={{ margin: 0, fontSize: "12px", color: "#3b82f6" }}>Accuracy</p>
-                <p style={{ margin: 0, fontSize: "22px", fontWeight: "bold", color: "#1e40af" }}>{pct}%</p>
-              </div>
-              <div>
-                <p style={{ margin: 0, fontSize: "12px", color: "#3b82f6" }}>Time Spent</p>
-                <p style={{ margin: 0, fontSize: "16px", fontWeight: "bold", color: "#1e3a8a" }}>{minutes}m {seconds}s</p>
-              </div>
-              {result.rank && (
-                <div>
-                  <p style={{ margin: 0, fontSize: "12px", color: "#3b82f6" }}>Rank</p>
-                  <p style={{ margin: 0, fontSize: "16px", fontWeight: "bold", color: "#1e3a8a" }}>#{result.rank}</p>
-                </div>
-              )}
+          {/* Header Section */}
+          <div style={{ borderBottom: `1px solid ${borderPrimary}`, paddingBottom: "6px", marginBottom: "10px", display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+            <div>
+              <h1 style={{ fontSize: "16px", fontWeight: "bold", margin: 0, color: accentPrimary, lineHeight: 1.2 }}>{exam.title}</h1>
+              <p style={{ fontSize: "10px", color: textMuted, marginTop: "2px", margin: 0 }}>Result & Performance Report</p>
+            </div>
+            <div style={{ textAlign: "right" }}>
+              <div style={{ fontSize: "14px", fontWeight: "900", color: textPrimary, letterSpacing: "-0.5px" }}>Exam Center</div>
+              <p style={{ fontSize: "9px", color: textMuted, margin: 0 }}>Free Assessment Platform</p>
             </div>
           </div>
-        </div>
 
-        {/* Questions Detail */}
-        <h2 style={{ fontSize: "20px", borderBottom: "2px solid #e5e7eb", paddingBottom: "8px", marginBottom: "20px", color: "#111827" }}>
-          Answer Sheet & Detailed Review
-        </h2>
+          {/* Summary Cards */}
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px", marginBottom: "15px" }}>
+            {/* Student Info */}
+            <div style={{ padding: "6px 8px", borderRadius: "6px", backgroundColor: bgSecondary, border: `1px solid ${borderPrimary}` }}>
+              <h3 style={{ margin: "0 0 4px 0", fontSize: "10px", color: textMuted, textTransform: "uppercase", letterSpacing: "0.5px" }}>Candidate Information</h3>
+              <p style={{ margin: "2px 0", fontSize: "14px", fontWeight: "bold", color: textPrimary }}>{result.studentProfile?.name || "Unknown Student"}</p>
+              <p style={{ margin: "2px 0", fontSize: "10px", color: textSecondary }}>ID: {result.studentProfile?.studentId || "—"}</p>
+              <p style={{ margin: "2px 0", fontSize: "10px", color: textSecondary }}>Date: {new Date(submittedAt).toLocaleString()}</p>
+            </div>
 
-        <div style={{ display: "block" }}>
-          {questions.map((q, i) => {
-            const studentAns = result.answers?.[q.id];
-            
-            if (isCq) {
-              const ansObj = typeof studentAns === "object" ? (studentAns as { mark?: number | string; comment?: string }) : null;
-              const mark = ansObj?.mark ?? null;
-              const comment = ansObj?.comment ?? null;
-              return (
-                <div key={q.id} className="no-break" style={{ padding: "16px", border: "1px solid #e5e7eb", borderRadius: "8px", backgroundColor: "#ffffff", marginBottom: "20px", pageBreakInside: "avoid" }}>
-                  <p style={{ margin: "0 0 12px 0", fontSize: "15px", fontWeight: "600", color: "#111827", lineHeight: 1.5 }}>
-                    <span style={{ color: "#3b82f6", marginRight: "6px" }}>Q{i + 1}.</span> {q.text}
-                  </p>
-                  <div style={{ marginTop: "12px", padding: "12px", backgroundColor: "#f9fafb", borderRadius: "6px", border: "1px solid #f3f4f6" }}>
-                    <p style={{ margin: 0, fontSize: "14px", fontWeight: "bold", color: "#374151" }}>Marks Awarded: {mark ?? "Pending"}</p>
-                    {comment && <p style={{ margin: "8px 0 0 0", fontSize: "14px", fontStyle: "italic", color: "#6b7280" }}>Evaluator Comment: {comment}</p>}
-                  </div>
+            {/* Performance Info */}
+            <div style={{ padding: "6px 8px", borderRadius: "6px", backgroundColor: isDark ? "#1e3a8a20" : "#eff6ff", border: isDark ? "1px solid #1e3a8a40" : "1px solid #bfdbfe" }}>
+              <h3 style={{ margin: "0 0 4px 0", fontSize: "10px", color: isDark ? "#93c5fd" : "#1d4ed8", textTransform: "uppercase", letterSpacing: "0.5px" }}>Performance Summary</h3>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "4px" }}>
+                <div>
+                  <p style={{ margin: 0, fontSize: "10px", color: isDark ? "#60a5fa" : "#3b82f6" }}>Final Score</p>
+                  <p style={{ margin: 0, fontSize: "14px", fontWeight: "bold", color: isDark ? "#bfdbfe" : "#1e40af" }}>{scoreText}</p>
                 </div>
-              );
-            }
-
-            // MCQ Logic
-            const isCorrect = studentAns === q.correctIndex;
-            const isSkipped = studentAns === undefined;
-            const statusColor = isCorrect ? "#059669" : isSkipped ? "#6b7280" : "#dc2626";
-            const statusText = isCorrect ? "Correct" : isSkipped ? "Skipped" : "Incorrect";
-            const statusBg = isCorrect ? "#ecfdf5" : isSkipped ? "#f3f4f6" : "#fef2f2";
-            const statusBorder = isCorrect ? "#a7f3d0" : isSkipped ? "#e5e7eb" : "#fecaca";
-
-            return (
-              <div key={q.id} className="no-break" style={{ padding: "16px", border: `1px solid ${statusBorder}`, backgroundColor: statusBg, borderRadius: "8px", marginBottom: "20px", pageBreakInside: "avoid" }}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "16px", gap: "12px" }}>
-                  <p style={{ margin: 0, fontSize: "15px", fontWeight: "600", color: "#111827", flex: 1, lineHeight: 1.5 }}>
-                    <span style={{ color: "#3b82f6", marginRight: "6px" }}>Q{i + 1}.</span> {q.text}
-                  </p>
-                  <span style={{ padding: "4px 10px", borderRadius: "6px", fontSize: "12px", fontWeight: "bold", backgroundColor: statusColor, color: "#fff", whiteSpace: "nowrap" }}>
-                    {statusText}
-                  </span>
+                <div>
+                  <p style={{ margin: 0, fontSize: "10px", color: isDark ? "#60a5fa" : "#3b82f6" }}>Accuracy</p>
+                  <p style={{ margin: 0, fontSize: "14px", fontWeight: "bold", color: isDark ? "#bfdbfe" : "#1e40af" }}>{pct}%</p>
                 </div>
-
-                <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: "8px", marginTop: "12px" }}>
-                  {q.options?.map((opt, optIdx) => {
-                    const isStudentChoice = studentAns === optIdx;
-                    const isActualCorrect = q.correctIndex === optIdx;
-                    
-                    const optStyle = { 
-                      padding: "10px 12px", 
-                      borderRadius: "6px", 
-                      border: "1px solid #e5e7eb", 
-                      backgroundColor: "#ffffff", 
-                      fontSize: "14px",
-                      color: "#374151",
-                      display: "flex",
-                      alignItems: "center"
-                    };
-                    
-                    if (isActualCorrect) {
-                      optStyle.border = "1px solid #059669";
-                      optStyle.backgroundColor = "#d1fae5";
-                      optStyle.color = "#064e3b";
-                    } else if (isStudentChoice && !isActualCorrect) {
-                      optStyle.border = "1px solid #dc2626";
-                      optStyle.backgroundColor = "#fee2e2";
-                      optStyle.color = "#7f1d1d";
-                    }
-
-                    return (
-                      <div key={optIdx} style={optStyle}>
-                        <strong style={{ marginRight: "10px", color: isActualCorrect ? "#059669" : isStudentChoice ? "#dc2626" : "#6b7280" }}>{String.fromCharCode(65 + optIdx)}.</strong> 
-                        <span style={{ flex: 1 }}>{opt}</span>
-                        {isStudentChoice && <span style={{ marginLeft: "8px", fontSize: "11px", fontWeight: "bold", color: isActualCorrect ? "#059669" : "#dc2626" }}>{isActualCorrect ? "✓ Your Answer" : "✗ Your Answer"}</span>}
-                        {isActualCorrect && !isStudentChoice && <span style={{ marginLeft: "8px", fontSize: "11px", fontWeight: "bold", color: "#059669" }}>✓ Correct Answer</span>}
-                      </div>
-                    );
-                  })}
+                <div>
+                  <p style={{ margin: 0, fontSize: "10px", color: isDark ? "#60a5fa" : "#3b82f6" }}>Time Spent</p>
+                  <p style={{ margin: 0, fontSize: "12px", fontWeight: "bold", color: isDark ? "#bfdbfe" : "#1e3a8a" }}>{minutes}m {seconds}s</p>
                 </div>
-
-                {q.explanation && (
-                  <div style={{ marginTop: "16px", padding: "12px", backgroundColor: "rgba(255,255,255,0.7)", borderRadius: "6px", fontSize: "13px", color: "#4b5563", border: "1px dashed #d1d5db" }}>
-                    <strong style={{ color: "#374151" }}>Explanation:</strong> {q.explanation}
+                {result.rank && (
+                  <div>
+                    <p style={{ margin: 0, fontSize: "10px", color: isDark ? "#60a5fa" : "#3b82f6" }}>Rank</p>
+                    <p style={{ margin: 0, fontSize: "12px", fontWeight: "bold", color: isDark ? "#bfdbfe" : "#1e3a8a" }}>#{result.rank}</p>
                   </div>
                 )}
               </div>
-            );
-          })}
-        </div>
+            </div>
+          </div>
 
-        {/* Footer */}
-        <div style={{ marginTop: "40px", paddingTop: "20px", borderTop: "1px solid #e5e7eb", textAlign: "center", fontSize: "12px", color: "#9ca3af" }}>
-          Generated by MCQ Pro Online Exam Center • {new Date().toLocaleDateString()}
+          {/* Questions Detail */}
+          <h2 style={{ fontSize: "14px", borderBottom: `1px solid ${borderPrimary}`, paddingBottom: "4px", marginBottom: "10px", color: textPrimary }}>
+            Answer Sheet & Detailed Review
+          </h2>
+
+          <div style={{ display: "block" }}>
+            {questions.map((q, i) => {
+              const studentAns = result.answers?.[q.id];
+
+              if (isCq) {
+                const ansObj = typeof studentAns === "object" ? (studentAns as { mark?: number | string; comment?: string }) : null;
+                const mark = ansObj?.mark ?? null;
+                const comment = ansObj?.comment ?? null;
+                return (
+                  <div key={q.id} className="no-break" style={{ padding: "6px 8px", border: `1px solid ${borderPrimary}`, borderRadius: "4px", backgroundColor: bgPrimary, marginBottom: "8px", pageBreakInside: "avoid" }}>
+                    <p style={{ margin: "0 0 4px 0", fontSize: "11px", fontWeight: "600", color: textPrimary, lineHeight: 1.3 }}>
+                      <span style={{ color: isDark ? "#60a5fa" : "#3b82f6", marginRight: "4px" }}>Q{i + 1}.</span> {q.text}
+                    </p>
+                    <div style={{ marginTop: "4px", padding: "6px", backgroundColor: bgSecondary, borderRadius: "4px", border: `1px solid ${borderPrimary}` }}>
+                      <p style={{ margin: 0, fontSize: "10px", fontWeight: "bold", color: textSecondary }}>Marks Awarded: {mark ?? "Pending"}</p>
+                      {comment && <p style={{ margin: "4px 0 0 0", fontSize: "10px", fontStyle: "italic", color: textMuted }}>Evaluator Comment: {comment}</p>}
+                    </div>
+                  </div>
+                );
+              }
+
+              // MCQ Logic
+              const isCorrect = studentAns === q.correctIndex;
+              const isSkipped = studentAns === undefined;
+              const statusColor = isCorrect ? (isDark ? "#059669" : "#059669") : isSkipped ? (isDark ? "#4b5563" : "#6b7280") : (isDark ? "#dc2626" : "#dc2626");
+              const statusText = isCorrect ? "Correct" : isSkipped ? "Skipped" : "Incorrect";
+              const statusBg = isCorrect ? (isDark ? "#064e3b40" : "#ecfdf5") : isSkipped ? (isDark ? "#1f293740" : "#f3f4f6") : (isDark ? "#7f1d1d40" : "#fef2f2");
+              const statusBorder = isCorrect ? (isDark ? "#065f46" : "#a7f3d0") : isSkipped ? (isDark ? "#374151" : "#e5e7eb") : (isDark ? "#991b1b" : "#fecaca");
+
+              return (
+                <div key={q.id} className="no-break" style={{ padding: "6px 8px", border: `1px solid ${statusBorder}`, backgroundColor: statusBg, borderRadius: "4px", marginBottom: "8px", pageBreakInside: "avoid" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "6px", gap: "6px" }}>
+                    <p style={{ margin: 0, fontSize: "11px", fontWeight: "600", color: textPrimary, flex: 1, lineHeight: 1.3 }}>
+                      <span style={{ color: isDark ? "#60a5fa" : "#3b82f6", marginRight: "4px" }}>Q{i + 1}.</span> {q.text}
+                    </p>
+                    <span style={{
+                      padding: "2px 8px",
+                      borderRadius: "9999px",
+                      fontSize: "9px",
+                      fontWeight: "bold",
+                      backgroundColor: isCorrect ? (isDark ? "#064e3b40" : "#d1fae5") : isSkipped ? (isDark ? "#1f2937" : "#e5e7eb") : (isDark ? "#7f1d1d40" : "#fee2e2"),
+                      color: isCorrect ? (isDark ? "#34d399" : "#065f46") : isSkipped ? (isDark ? "#9ca3af" : "#4b5563") : (isDark ? "#f87171" : "#991b1b"),
+                      border: `1px solid ${isCorrect ? (isDark ? "#065f46" : "#a7f3d0") : isSkipped ? (isDark ? "#374151" : "#d1d5db") : (isDark ? "#991b1b" : "#fecaca")}`,
+                      whiteSpace: "nowrap"
+                    }}>
+                      {statusText}
+                    </span>
+                  </div>
+
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "4px", marginTop: "4px" }}>
+                    {q.options?.map((opt, optIdx) => {
+                      const isStudentChoice = studentAns === optIdx;
+                      const isActualCorrect = q.correctIndex === optIdx;
+
+                      const optStyle = {
+                        padding: "4px 6px",
+                        borderRadius: "3px",
+                        border: `1px solid ${isDark ? "#374151" : "#e5e7eb"}`,
+                        backgroundColor: isDark ? "#1f2937" : "#ffffff",
+                        fontSize: "10px",
+                        color: textSecondary,
+                        display: "flex",
+                        alignItems: "center"
+                      };
+
+                      if (isActualCorrect) {
+                        optStyle.border = `1px solid ${isDark ? "#059669" : "#059669"}`;
+                        optStyle.backgroundColor = isDark ? "#064e3b" : "#d1fae5";
+                        optStyle.color = isDark ? "#6ee7b7" : "#064e3b";
+                      } else if (isStudentChoice && !isActualCorrect) {
+                        optStyle.border = `1px solid ${isDark ? "#dc2626" : "#dc2626"}`;
+                        optStyle.backgroundColor = isDark ? "#7f1d1d" : "#fee2e2";
+                        optStyle.color = isDark ? "#fca5a5" : "#7f1d1d";
+                      }
+
+                      return (
+                        <div key={optIdx} style={optStyle}>
+                          <strong style={{ marginRight: "4px", color: isActualCorrect ? (isDark ? "#34d399" : "#059669") : isStudentChoice ? (isDark ? "#f87171" : "#dc2626") : textMuted }}>{String.fromCharCode(65 + optIdx)}.</strong>
+                          <span style={{ flex: 1 }}>{opt}</span>
+                          {isStudentChoice && <span style={{ marginLeft: "4px", fontSize: "8px", fontWeight: "bold", color: isActualCorrect ? (isDark ? "#34d399" : "#059669") : (isDark ? "#f87171" : "#dc2626") }}>{isActualCorrect ? "✓" : "✗"}</span>}
+                          {isActualCorrect && !isStudentChoice && <span style={{ marginLeft: "4px", fontSize: "8px", fontWeight: "bold", color: isDark ? "#34d399" : "#059669" }}>✓</span>}
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  {q.explanation && (
+                    <div style={{ marginTop: "6px", padding: "6px", backgroundColor: isDark ? "#1e3a8a30" : "rgba(255,255,255,0.7)", borderRadius: "3px", fontSize: "9px", color: textSecondary, border: `1px dashed ${isDark ? "#3b82f6" : "#d1d5db"}` }}>
+                      <strong style={{ color: textPrimary }}>Explanation:</strong> {q.explanation}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Footer Section */}
+          <div style={{ borderTop: `1px solid ${borderPrimary}`, marginTop: "12px", paddingTop: "15px", paddingBottom: "4mm", textAlign: "center", fontSize: "9px", color: textSecondary }}>
+            Generated by Exam Center • {new Date().toLocaleDateString()}
+          </div>
+
         </div>
       </div>
     );

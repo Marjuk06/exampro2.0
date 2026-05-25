@@ -88,6 +88,7 @@ export async function syncPublicProfile(db: Firestore, uid: string): Promise<voi
     uid,
     studentId: profile.studentId,
     name: profile.name,
+    email: profile.email,
     bio: profile.bio ?? "",
     avatarUrl: profile.avatarUrl,
     gamification: g,

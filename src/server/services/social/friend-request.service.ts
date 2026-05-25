@@ -58,12 +58,12 @@ export async function sendFriendRequest(
         .collection(friendRequestsCollection())
         .where("from", "==", fromUid)
         .where("to", "==", toUid)
-        .where("status", "==", "pending")
-        .limit(1)
         .get(),
     ])
   );
-  if (!existingSnap.empty) throw new ApiError(409, "Request already pending");
+  if (existingSnap.docs.some(d => d.data().status === "pending")) {
+    throw new ApiError(409, "Request already pending");
+  }
 
   const ref = db.collection(friendRequestsCollection()).doc();
   await ref.set({
@@ -128,9 +128,6 @@ export async function respondToFriendRequest(
   await batch.commit();
 }
 
-/**
- * List all pending friend requests for a user (as recipient).
- */
 export async function listPendingRequests(
   db: Firestore,
   appId: string,
@@ -141,9 +138,9 @@ export async function listPendingRequests(
       .collection(friendRequestsCollection())
       .where("to", "==", uid)
       .where("status", "==", "pending")
-      .orderBy("createdAt", "desc")
       .limit(25)
       .get()
   );
-  return snap.docs.map((d) => ({ id: d.id, ...d.data() }) as FriendRequest);
+  const results = snap.docs.map((d) => ({ id: d.id, ...d.data() }) as FriendRequest);
+  return results.sort((a, b) => b.createdAt - a.createdAt);
 }

@@ -122,12 +122,28 @@ export async function claimDailyReward(uid: string): Promise<{
   );
 
   const { levelFromXp, titleForLevel } = await import("@/features/gamification/xp");
+  const newLevel = levelFromXp(totalXp);
+  const newTitle = titleForLevel(newLevel);
   await profileRef.update({
     xp: totalXp,
-    level: levelFromXp(totalXp),
-    title: titleForLevel(levelFromXp(totalXp)),
+    level: newLevel,
+    title: newTitle,
     updatedAt: Date.now(),
   });
+
+  // Keep leaderboard entry in sync
+  const lbRef = db.doc(paths.globalLeaderboardEntry(uid));
+  await lbRef.set(
+    {
+      uid,
+      studentId: profile.data()?.studentId,
+      name: profile.data()?.name,
+      xp: totalXp,
+      level: newLevel,
+      updatedAt: Date.now(),
+    },
+    { merge: true }
+  );
 
   return { xp, streakDays };
 }

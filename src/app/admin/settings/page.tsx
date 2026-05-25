@@ -82,7 +82,7 @@ export default function AdminSettingsPage() {
   const [betaMode, setBetaMode] = useState(false);
   const [constructionBanner, setConstructionBanner] = useState(false);
   const [constructionMessage, setConstructionMessage] = useState(
-    "🚧 MCQ Pro 2.0 is currently in Beta — some features are under active development."
+    "🚧 Exam Center is currently in Beta — some features are under active development."
   );
   const [targetUid, setTargetUid] = useState("");
   const [targetRole, setTargetRole] = useState<UserRole>("admin");
@@ -99,7 +99,7 @@ export default function AdminSettingsPage() {
         setConstructionBanner(d.constructionBanner ?? false);
         setConstructionMessage(
           d.constructionMessage ??
-            "🚧 MCQ Pro 2.0 is currently in Beta — some features are under active development."
+            "🚧 Exam Center is currently in Beta — some features are under active development."
         );
       })
       .catch(() => toast.error("Failed to load settings"))

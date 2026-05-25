@@ -2,7 +2,7 @@
 
 import { useEffect, useState, type ReactNode } from "react";
 import { motion } from "framer-motion";
-import { Award, Flame, Star, Trophy, Camera, Loader2, Shuffle } from "lucide-react";
+import { Award, Flame, Star, Trophy, Camera, Loader2, Shuffle, RotateCcw } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -12,6 +12,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { xpProgressInLevel } from "@/features/gamification/xp";
 import { ACHIEVEMENTS } from "@/features/gamification/achievements";
 import type { PublicProfile } from "@/types/gamification";
+import { ChangePasswordForm } from "./change-password-form";
 
 export function PublicProfileView({ studentId }: { studentId: string }) {
   const [profile, setProfile] = useState<PublicProfile | null>(null);
@@ -78,7 +79,7 @@ export function PublicProfileView({ studentId }: { studentId: string }) {
     setUpdatingAvatar(true);
     try {
       const randomSeed = Math.random().toString(36).substring(7);
-      const newUrl = `https://api.dicebear.com/9.x/adventurer/svg?seed=${randomSeed}`;
+      const newUrl = `https://api.dicebear.com/9.x/micah/svg?seed=${randomSeed}`;
       const res = await fetch("/api/student/profile", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
@@ -90,6 +91,25 @@ export function PublicProfileView({ studentId }: { studentId: string }) {
       toast.success("Avatar randomized!");
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Error updating avatar");
+    } finally {
+      setUpdatingAvatar(false);
+    }
+  }
+
+  async function handleResetAvatar() {
+    setUpdatingAvatar(true);
+    try {
+      const res = await fetch("/api/student/profile", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ resetAvatar: true }),
+      });
+      if (!res.ok) throw new Error("Failed to reset avatar");
+      await fetchProfile();
+      refreshProfile();
+      toast.success("Avatar reset to Google profile picture!");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Error resetting avatar");
     } finally {
       setUpdatingAvatar(false);
     }
@@ -145,7 +165,7 @@ export function PublicProfileView({ studentId }: { studentId: string }) {
             </Avatar>
             {isOwner && (
               <div className="absolute -bottom-2 -right-2 flex gap-1">
-                <label className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-full bg-blue-600 text-white shadow hover:bg-blue-700 transition disabled:opacity-50">
+                <label className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-full bg-blue-600 text-white shadow hover:bg-blue-700 transition disabled:opacity-50" title="Upload Avatar">
                   {updatingAvatar ? <Loader2 className="h-4 w-4 animate-spin" /> : <Camera className="h-4 w-4" />}
                   <input type="file" accept="image/*" className="hidden" onChange={handleAvatarUpload} disabled={updatingAvatar} />
                 </label>
@@ -156,6 +176,14 @@ export function PublicProfileView({ studentId }: { studentId: string }) {
                   title="Randomize Avatar"
                 >
                   <Shuffle className="h-4 w-4" />
+                </button>
+                <button
+                  onClick={handleResetAvatar}
+                  disabled={updatingAvatar}
+                  className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-full bg-slate-700 text-white shadow hover:bg-slate-600 transition disabled:opacity-50"
+                  title="Reset to Google Avatar"
+                >
+                  <RotateCcw className="h-4 w-4" />
                 </button>
               </div>
             )}
@@ -253,6 +281,10 @@ export function PublicProfileView({ studentId }: { studentId: string }) {
           </div>
         </CardContent>
       </Card>
+
+      {isOwner && (
+        <ChangePasswordForm />
+      )}
     </motion.div>
   );
 }

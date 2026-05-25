@@ -31,7 +31,7 @@ export const LeaderboardPdfTemplate = forwardRef<HTMLDivElement, LeaderboardPdfT
             <p style={{ fontSize: "16px", color: "#6b7280", marginTop: "4px" }}>Filter: {examName}</p>
           </div>
           <div style={{ textAlign: "right" }}>
-            <div style={{ fontSize: "20px", fontWeight: "bold", color: "#1e3a8a" }}>MCQ Pro Admin</div>
+            <div style={{ fontSize: "20px", fontWeight: "bold", color: "#1e3a8a" }}>Exam Center Admin</div>
             <p style={{ fontSize: "12px", color: "#6b7280", marginTop: "2px" }}>Generated {new Date().toLocaleDateString()}</p>
           </div>
         </div>

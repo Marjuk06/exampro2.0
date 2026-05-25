@@ -100,7 +100,7 @@ export function ExamResultView({ exam, result, questions }: ExamResultViewProps)
     percentage >= 80 ? "text-green-400" : percentage >= 50 ? "text-yellow-400" : "text-red-400";
 
   return (
-    <div className="w-full max-w-3xl">
+    <div className="mx-auto w-full max-w-3xl">
       <Link href="/student">
         <Button variant="outline" className="mb-6">
           <ArrowLeft className="mr-2 h-4 w-4" /> Back
@@ -186,10 +186,10 @@ export function ExamResultView({ exam, result, questions }: ExamResultViewProps)
                       className={cn(
                         "shrink-0 rounded-full px-3 py-1 text-xs font-bold",
                         isCorrect
-                          ? "bg-green-500/20 text-green-400"
+                          ? "bg-green-500/20 text-green-700 dark:text-green-400"
                           : stuAns === undefined
-                            ? "bg-gray-500/20 text-gray-400"
-                            : "bg-red-500/20 text-red-400"
+                            ? "bg-secondary text-secondary-foreground"
+                            : "bg-red-500/20 text-red-700 dark:text-red-400"
                       )}
                     >
                       {isCorrect ? "Correct" : stuAns === undefined ? "Skipped" : "Wrong"}
@@ -204,17 +204,17 @@ export function ExamResultView({ exam, result, questions }: ExamResultViewProps)
                     />
                   )}
                   {q.explanation && (
-                    <p className="mb-3 rounded-lg bg-blue-500/10 p-3 text-sm text-blue-200">
+                    <p className="mb-3 rounded-lg bg-blue-500/10 p-3 text-sm text-blue-700 dark:text-blue-200">
                       {q.explanation}
                     </p>
                   )}
                   <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
                     {q.options.map((opt, oIdx) => {
-                      let styling = "bg-black/20 border border-white/5 text-gray-400";
+                      let styling = "bg-secondary text-secondary-foreground border border-border/50";
                       if (oIdx === q.correctIndex)
-                        styling = "bg-green-500/20 border border-green-500/50 text-green-100";
+                        styling = "bg-green-500/20 border border-green-500/50 text-green-700 dark:text-green-100";
                       else if (oIdx === stuAns && !isCorrect)
-                        styling = "bg-red-500/20 border border-red-500/50 text-red-100";
+                        styling = "bg-red-500/20 border border-red-500/50 text-red-700 dark:text-red-100";
                       return (
                         <div key={oIdx} className={cn("rounded-lg px-4 py-3 text-sm", styling)}>
                           {opt}

@@ -194,16 +194,22 @@ export function ExamLeaderboardCard({ examId }: { examId: string }) {
           </p>
         )}
         <div className="space-y-2">
-          {data.topEntries.slice(0, 10).map((e) => (
-            <LeaderboardRow
-              key={e.uid}
-              rank={e.rank}
-              name={e.name}
-              studentId={e.studentId}
-              meta={`${e.score}/${e.maxScore} · ${e.accuracy}% acc · ${formatDuration(Math.floor(e.timeTakenMs / 1000))}`}
-              highlight={data.myRank?.rank === e.rank}
-            />
-          ))}
+          {(!data.topEntries || data.topEntries.length === 0) ? (
+            <p className="py-6 text-center text-sm text-muted-foreground">
+              No rankings available yet. Be the first to conquer this exam!
+            </p>
+          ) : (
+            data.topEntries.slice(0, 10).map((e) => (
+              <LeaderboardRow
+                key={e.uid}
+                rank={e.rank}
+                name={e.name}
+                studentId={e.studentId}
+                meta={`${e.score}/${e.maxScore} · ${e.accuracy}% acc · ${formatDuration(Math.floor(e.timeTakenMs / 1000))}`}
+                highlight={data.myRank?.rank === e.rank}
+              />
+            ))
+          )}
         </div>
       </CardContent>
     </Card>

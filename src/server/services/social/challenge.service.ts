@@ -276,13 +276,11 @@ export async function listUserChallenges(
       db
         .collection(paths.challenges())
         .where("challengerId", "==", uid)
-        .orderBy("createdAt", "desc")
         .limit(limit)
         .get(),
       db
         .collection(paths.challenges())
         .where("challengedId", "==", uid)
-        .orderBy("createdAt", "desc")
         .limit(limit)
         .get(),
     ])

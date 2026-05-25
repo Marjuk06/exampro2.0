@@ -49,6 +49,7 @@ export function ExamForm({ exam, onSuccess }: ExamFormProps) {
           proctoringEnabled: exam.proctoringEnabled ?? true,
           maxViolations: exam.maxViolations ?? 5,
           allowRetakes: exam.allowRetakes ?? false,
+          requireRetakeApproval: exam.requireRetakeApproval ?? false,
           maxRetakes: exam.maxRetakes ?? 1,
         }
       : {
@@ -64,6 +65,7 @@ export function ExamForm({ exam, onSuccess }: ExamFormProps) {
           proctoringEnabled: true,
           maxViolations: 5,
           allowRetakes: false,
+          requireRetakeApproval: false,
           maxRetakes: 1,
         },
   });
@@ -182,10 +184,19 @@ export function ExamForm({ exam, onSuccess }: ExamFormProps) {
               Allow Retakes
             </label>
             {allowRetakes && (
-              <div className="flex items-center gap-2 text-sm">
-                <Label>Max Retakes</Label>
-                <Input type="number" className="w-20" {...form.register("maxRetakes")} />
-              </div>
+              <>
+                <label className="flex items-center gap-2 text-sm text-yellow-600 dark:text-yellow-400 font-medium">
+                  <Switch
+                    checked={form.watch("requireRetakeApproval")}
+                    onCheckedChange={(c) => form.setValue("requireRetakeApproval", c)}
+                  />
+                  Require Admin Approval
+                </label>
+                <div className="flex items-center gap-2 text-sm">
+                  <Label>Max Retakes</Label>
+                  <Input type="number" className="w-20" {...form.register("maxRetakes")} />
+                </div>
+              </>
             )}
           </div>
           <div>

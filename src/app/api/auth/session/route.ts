@@ -74,7 +74,7 @@ export async function POST(request: Request) {
         name: decoded.name ?? decoded.email?.split("@")[0] ?? "Student",
         studentId: generateStudentId(),
         role,
-        avatarUrl: decoded.picture || `https://api.dicebear.com/9.x/adventurer/svg?seed=${decoded.uid}`,
+        avatarUrl: decoded.picture || `https://api.dicebear.com/9.x/micah/svg?seed=${decoded.uid}`,
         createdAt: now,
         updatedAt: now,
         xp: 0,
@@ -113,7 +113,7 @@ export async function POST(request: Request) {
       }
       // Sync avatar if missing or empty
       if (!profile.avatarUrl) {
-        const avatarToSet = decoded.picture || `https://api.dicebear.com/9.x/adventurer/svg?seed=${decoded.uid}`;
+        const avatarToSet = decoded.picture || `https://api.dicebear.com/9.x/micah/svg?seed=${decoded.uid}`;
         updatePayload.avatarUrl = avatarToSet;
         profile = { ...profile, avatarUrl: avatarToSet };
       }

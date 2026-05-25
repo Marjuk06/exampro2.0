@@ -30,6 +30,7 @@ export interface PublicProfile {
   uid: string;
   studentId: string;
   name: string;
+  email?: string;
   bio: string;
   avatarUrl?: string;
   gamification: UserGamification;

@@ -20,12 +20,10 @@ function StudentTabs() {
 
   return (
     <>
-      <ErrorBoundary section="Engagement Hub">
-        <EngagementHub />
-      </ErrorBoundary>
       <Tabs defaultValue={defaultTab} key={defaultTab}>
         <TabsList className="mb-6 flex h-auto w-full justify-start overflow-x-auto whitespace-nowrap md:flex-wrap">
           <TabsTrigger value="exams">Exams</TabsTrigger>
+          <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
           <TabsTrigger value="practice">Practice</TabsTrigger>
           <TabsTrigger value="leaderboard">Leaderboard</TabsTrigger>
           <TabsTrigger value="analytics">Analytics</TabsTrigger>
@@ -36,6 +34,12 @@ function StudentTabs() {
         <TabsContent value="exams">
           <ErrorBoundary section="Exam Dashboard">
             <ExamDashboard />
+          </ErrorBoundary>
+        </TabsContent>
+        <TabsContent value="dashboard">
+          <h2 className="mb-4 text-2xl font-bold">Your Dashboard</h2>
+          <ErrorBoundary section="Engagement Hub">
+            <EngagementHub />
           </ErrorBoundary>
         </TabsContent>
         <TabsContent value="practice">
@@ -77,10 +81,16 @@ function StudentTabs() {
   );
 }
 
+import { CustomLoader } from "@/components/ui/custom-loader";
+
 export default function StudentPage() {
   return (
     <main> 
-      <Suspense fallback={<Skeleton className="h-64 w-full" />}>
+      <Suspense fallback={
+        <div className="flex h-64 w-full items-center justify-center">
+          <CustomLoader variant="circle" />
+        </div>
+      }>
         <StudentTabs />
       </Suspense>
     </main>

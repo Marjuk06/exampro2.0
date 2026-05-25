@@ -17,6 +17,7 @@ export const examFormSchema = z
     proctoringEnabled: z.boolean().default(true),
     maxViolations: z.coerce.number().min(1).max(20).default(5),
     allowRetakes: z.boolean().default(false),
+    requireRetakeApproval: z.boolean().default(false),
     maxRetakes: z.coerce.number().min(1).max(10).default(1),
     tags: z.string().optional(),
     difficulty: z.enum(["easy", "medium", "hard"]).optional(),

@@ -38,7 +38,11 @@ export function getAdminAuth(): Auth {
 export function getAdminDb(): Firestore {
   if (adminDb) return adminDb;
   adminDb = getFirestore(getAdminApp());
-  adminDb.settings({ ignoreUndefinedProperties: true });
+  try {
+    adminDb.settings({ ignoreUndefinedProperties: true });
+  } catch (error) {
+    // Ignore the "Firestore has already been initialized" error in development due to HMR
+  }
   return adminDb;
 }
 

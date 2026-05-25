@@ -18,7 +18,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Too many requests" }, { status: 429 });
     }
 
-    const { examId, examTitle, duration, studentName, studentId } =
+    const { examId, examTitle, duration, studentName, studentId, isRetake } =
       await request.json();
 
     const sessionId = liveSessionRepository.sessionId(session.uid, examId);
@@ -55,6 +55,15 @@ export async function POST(request: Request) {
     };
 
     await liveSessionRepository.set(sessionId, liveSession);
+
+    if (isRetake) {
+      const { retakeRepository } = await import("@/server/repositories/retake.repository");
+      const retakes = await retakeRepository.findRecentByUserExam(session.uid, examId, 0);
+      const approved = retakes.filter(r => r.status === "approved").sort((a,b) => b.timestamp - a.timestamp);
+      if (approved.length > 0) {
+        await retakeRepository.update(approved[0].id, { status: "used" });
+      }
+    }
 
     return jsonOk({ sessionId, endTime, resumed: false });
   } catch (e) {

@@ -2,6 +2,7 @@
 
 import { use, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { doc, getDoc, collection, query, where, getDocs } from "firebase/firestore";
 import { Loader2 } from "lucide-react";
 import { getFirebaseDb } from "@/lib/firebase/client";
@@ -36,6 +37,8 @@ export default function ExamPage({
   const { endTime, sessionId, setSession, setExamId } = useExamStore();
   const now = useClientNow();
   const mounted = useMounted();
+  const searchParams = useSearchParams();
+  const isRetake = searchParams.get("retake") === "true";
 
   useEffect(() => {
     async function load() {
@@ -88,7 +91,7 @@ export default function ExamPage({
   }, [status]);
 
   useEffect(() => {
-    if (!exam || !profile || myResult) return;
+    if (!exam || !profile || (myResult && !isRetake)) return;
 
     async function startSession() {
       const res = await fetch("/api/exam/live-session", {
@@ -100,6 +103,7 @@ export default function ExamPage({
           duration: exam!.duration,
           studentName: profile!.name,
           studentId: profile!.studentId,
+          isRetake,
         }),
       });
       if (res.ok) {
@@ -174,7 +178,7 @@ export default function ExamPage({
     );
   }
 
-  if (myResult) {
+  if (myResult && !isRetake) {
     return (
       <>
         <StudentHeader />

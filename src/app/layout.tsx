@@ -17,13 +17,16 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "MCQ Pro — Ultimate Exam Center",
-  description: "Professional online examination platform with competitive rankings, practice modes, and real-time challenges.",
+  title: "Exam Center",
+  description: "Advanced dynamic examination platform with AI proctoring, analytics, and gamification.",
   manifest: "/manifest.json",
+  icons: {
+    icon: "/favicon.ico",
+  },
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
-    title: "MCQ Pro",
+    title: "Exam Center",
   },
   other: {
     "mobile-web-app-capable": "yes",

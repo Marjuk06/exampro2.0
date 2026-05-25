@@ -30,6 +30,7 @@ export const retakeService = {
       examId: input.examId,
       examTitle: input.examTitle,
       timestamp: Date.now(),
+      status: "pending",
     });
   },
 };

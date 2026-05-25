@@ -2,7 +2,7 @@ import { getAdminDb } from "@/lib/firebase/admin";
 import { paths } from "@/lib/firebase/paths";
 import type { ExamResult } from "@/types";
 
-const APP_NAME = "MCQ Pro";
+const APP_NAME = "Exam Center";
 const VERIFY_BASE_URL =
   process.env.NEXT_PUBLIC_APP_URL ?? "https://mcqpro.app";
 

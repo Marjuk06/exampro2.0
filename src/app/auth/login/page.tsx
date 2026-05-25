@@ -20,6 +20,7 @@ import {
   establishServerSession,
 } from "@/hooks/use-auth";
 import { getFirebaseAuth } from "@/lib/firebase/client";
+import { sendPasswordResetEmail } from "firebase/auth";
 
 type LoginForm = z.infer<typeof authLoginSchema>;
 
@@ -61,6 +62,24 @@ export default function LoginPage() {
       toast.success("Signed in successfully");
     } catch {
       toast.error("Invalid email or password");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleResetPassword() {
+    const email = form.getValues("email");
+    if (!email) {
+      toast.error("Please enter your email address first");
+      return;
+    }
+    setLoading(true);
+    try {
+      await sendPasswordResetEmail(getFirebaseAuth(), email);
+      toast.success("Password reset email sent! Check your inbox.");
+    } catch (err: any) {
+      console.error(err);
+      toast.error(err.message || "Failed to send reset email.");
     } finally {
       setLoading(false);
     }
@@ -132,7 +151,17 @@ export default function LoginPage() {
                 <Input id="email" type="email" {...form.register("email")} />
               </div>
               <div>
-                <Label htmlFor="password">Password</Label>
+                <div className="flex justify-between items-center">
+                  <Label htmlFor="password">Password</Label>
+                  <button
+                    type="button"
+                    onClick={handleResetPassword}
+                    className="text-xs text-blue-400 hover:underline"
+                    disabled={loading}
+                  >
+                    Forgot Password?
+                  </button>
+                </div>
                 <Input id="password" type="password" {...form.register("password")} />
               </div>
               <Button type="submit" className="w-full" disabled={loading}>

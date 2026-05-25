@@ -12,7 +12,7 @@ const DEFAULT_SETTINGS: PublicSettings = {
   betaMode: false,
   constructionBanner: false,
   constructionMessage:
-    "🚧 MCQ Pro 2.0 is currently in Beta — some features are under active development.",
+    "🚧 Exam Center is currently in Beta — some features are under active development.",
 };
 
 /**

@@ -19,7 +19,7 @@ export const GET = withApiHandler(async () => {
       constructionBanner: settings.constructionBanner ?? false,
       constructionMessage:
         settings.constructionMessage ??
-        "🚧 MCQ Pro 2.0 is currently in Beta — some features are under active development.",
+        "🚧 Exam Center is currently in Beta — some features are under active development.",
     },
     {
       status: 200,

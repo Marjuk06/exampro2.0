@@ -14,6 +14,19 @@ export class RetakeRepository {
     await this.db.doc(paths.retake(id)).delete();
   }
 
+  async update(id: string, data: Partial<RetakeRequest>): Promise<void> {
+    await this.db.doc(paths.retake(id)).update(data);
+  }
+
+  async list(options?: { status?: string }): Promise<RetakeRequest[]> {
+    let q: FirebaseFirestore.Query = this.db.collection(paths.retakes());
+    if (options?.status) {
+      q = q.where("status", "==", options.status);
+    }
+    const snap = await q.orderBy("timestamp", "desc").get();
+    return snap.docs.map((d) => ({ id: d.id, ...d.data() }) as RetakeRequest);
+  }
+
   async findRecentByUserExam(
     uid: string,
     examId: string,

@@ -62,9 +62,10 @@ export function ExamDashboard() {
             const status = now
               ? getExamStatus(exam, now, hasOverride)
               : ("active" as const);
-            const pendingRetake = retakes.find(
+            const myRetakes = retakes.filter(
               (r) => r.uid === profile.uid && r.examId === exam.id
-            );
+            ).sort((a, b) => b.timestamp - a.timestamp);
+            const latestRetake = myRetakes[0];
 
             const isShakeable =
               !myResult && status === "active";
@@ -140,7 +141,7 @@ export function ExamDashboard() {
                       exam={exam}
                       status={status}
                       myResult={myResult}
-                      pendingRetake={!!pendingRetake}
+                      latestRetake={latestRetake}
                       hasOverride={hasOverride}
                     />
                   </CardContent>
@@ -211,13 +212,13 @@ function ExamActionButton({
   exam,
   status,
   myResult,
-  pendingRetake,
+  latestRetake,
   hasOverride,
 }: {
   exam: Exam;
   status: string;
   myResult?: ExamResult;
-  pendingRetake: boolean;
+  latestRetake?: import("@/types").RetakeRequest;
   hasOverride: boolean;
 }) {
   if (status === "upcoming") {
@@ -229,7 +230,7 @@ function ExamActionButton({
   }
 
   if (status === "expired" && !myResult) {
-    if (pendingRetake) {
+    if (latestRetake?.status === "pending") {
       return (
         <Button disabled className="w-full opacity-50">
           Access Requested...
@@ -243,6 +244,35 @@ function ExamActionButton({
   const canRetake = myResult && exam.allowRetakes && attemptNumber < (exam.maxRetakes ?? 1);
 
   if (canRetake) {
+    if (exam.requireRetakeApproval) {
+      if (latestRetake?.status === "pending") {
+        return (
+          <div className="flex flex-col gap-2 w-full">
+            <Link href={`/exam/${exam.id}/result/${myResult.id}`} className="w-full">
+              <Button variant="outline" className="w-full">
+                <Lock className="mr-2 h-4 w-4" /> View Result
+              </Button>
+            </Link>
+            <Button disabled className="w-full opacity-50 bg-yellow-600/50">
+              Pending Approval...
+            </Button>
+          </div>
+        );
+      }
+      if (latestRetake?.status !== "approved") {
+        return (
+          <div className="flex flex-col gap-2 w-full">
+            <Link href={`/exam/${exam.id}/result/${myResult.id}`} className="w-full">
+              <Button variant="outline" className="w-full">
+                <Lock className="mr-2 h-4 w-4" /> View Result
+              </Button>
+            </Link>
+            <RetakeRequestButton examId={exam.id} examTitle={exam.title} />
+          </div>
+        );
+      }
+    }
+
     return (
       <div className="flex flex-col gap-2 w-full">
         <Link href={`/exam/${exam.id}/result/${myResult.id}`} className="w-full">
@@ -250,7 +280,7 @@ function ExamActionButton({
             <Lock className="mr-2 h-4 w-4" /> View Result
           </Button>
         </Link>
-        <Link href={`/exam/${exam.id}`} className="w-full">
+        <Link href={`/exam/${exam.id}?retake=true`} className="w-full">
           <Button variant="default" className="w-full bg-blue-600 hover:bg-blue-700">
             <Play className="mr-2 h-4 w-4" /> Retake Exam ({attemptNumber}/{exam.maxRetakes ?? 1})
           </Button>

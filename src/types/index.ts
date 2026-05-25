@@ -63,6 +63,7 @@ export interface Exam {
   negativeMarking: number;
   sections?: ExamSection[];
   allowRetakes?: boolean;
+  requireRetakeApproval?: boolean;
   maxRetakes?: number;
   tags?: string[];
   difficulty?: "easy" | "medium" | "hard";
@@ -150,6 +151,7 @@ export interface RetakeRequest {
   examId: string;
   examTitle: string;
   timestamp: number;
+  status: "pending" | "approved" | "rejected" | "used";
 }
 
 export interface ViolationLog {

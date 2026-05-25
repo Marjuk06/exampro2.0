@@ -175,5 +175,6 @@ export function normalizeRetakeRequest(
     examId: typeof raw.examId === "string" ? raw.examId : "",
     examTitle: typeof raw.examTitle === "string" ? raw.examTitle : "Unknown Exam",
     timestamp: getSubmittedAtMs(raw.timestamp),
+    status: (typeof raw.status === "string" ? raw.status : "pending") as RetakeRequest["status"],
   };
 }

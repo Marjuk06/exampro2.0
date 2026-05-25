@@ -3,8 +3,11 @@
 import { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Search, Loader2, ChevronLeft, ChevronRight, User } from "lucide-react";
+import { Search, Loader2, ChevronLeft, ChevronRight, User, Plus } from "lucide-react";
 import { useDebounce } from "@/hooks/use-debounce";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { toast } from "sonner";
 
 interface StudentData {
   uid: string;
@@ -23,6 +26,36 @@ export default function AdminStudentsPage() {
   const [data, setData] = useState<StudentData[]>([]);
   const [loading, setLoading] = useState(true);
   const [pagination, setPagination] = useState({ total: 0, page: 1, limit: 20, totalPages: 1 });
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
+
+  const [isAddOpen, setIsAddOpen] = useState(false);
+  const [addForm, setAddForm] = useState({ name: "", email: "", password: "" });
+  const [isAdding, setIsAdding] = useState(false);
+  const [addError, setAddError] = useState("");
+
+  const handleAddStudent = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsAdding(true);
+    setAddError("");
+    try {
+      const res = await fetch("/api/admin/students/add", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(addForm),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to add student");
+      
+      setIsAddOpen(false);
+      setAddForm({ name: "", email: "", password: "" });
+      setRefreshTrigger(prev => prev + 1);
+      toast.success("Student added successfully!");
+    } catch (err: any) {
+      setAddError(err.message);
+    } finally {
+      setIsAdding(false);
+    }
+  };
 
   useEffect(() => {
     setPage(1);
@@ -45,20 +78,80 @@ export default function AdminStudentsPage() {
       }
     }
     fetchStudents();
-  }, [debouncedSearch, page]);
+  }, [debouncedSearch, page, refreshTrigger]);
 
   return (
     <div>
       <div className="mb-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <h2 className="text-2xl font-bold">Students Directory</h2>
-        <div className="relative w-full sm:w-96">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input 
-            placeholder="Search by name, ID, or email..." 
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-9 w-full bg-white/5 border-white/10"
-          />
+        <div className="flex w-full flex-col sm:flex-row gap-3 sm:w-auto items-center">
+          <div className="relative w-full sm:w-80">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input 
+              placeholder="Search by name, ID, or email..." 
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-9 w-full bg-white/5 border-white/10"
+            />
+          </div>
+          
+          <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
+            <DialogTrigger asChild>
+              <Button className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white">
+                <Plus className="mr-2 h-4 w-4" /> Add Student
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[425px]">
+              <DialogHeader>
+                <DialogTitle>Add New Student</DialogTitle>
+                <DialogDescription>
+                  Manually register a student account. They will be able to log in using the email and password provided here.
+                </DialogDescription>
+              </DialogHeader>
+              <form onSubmit={handleAddStudent} className="space-y-4 pt-4">
+                <div className="space-y-2">
+                  <Label htmlFor="name">Full Name</Label>
+                  <Input 
+                    id="name" 
+                    placeholder="e.g. John Doe" 
+                    required 
+                    value={addForm.name}
+                    onChange={e => setAddForm({...addForm, name: e.target.value})}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="email">Email Address</Label>
+                  <Input 
+                    id="email" 
+                    type="email" 
+                    placeholder="student@example.com" 
+                    required 
+                    value={addForm.email}
+                    onChange={e => setAddForm({...addForm, email: e.target.value})}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="password">Temporary Password</Label>
+                  <Input 
+                    id="password" 
+                    type="password" 
+                    placeholder="••••••••" 
+                    required 
+                    minLength={6}
+                    value={addForm.password}
+                    onChange={e => setAddForm({...addForm, password: e.target.value})}
+                  />
+                </div>
+                {addError && <p className="text-sm text-red-500">{addError}</p>}
+                <div className="flex justify-end pt-4">
+                  <Button type="submit" disabled={isAdding}>
+                    {isAdding && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                    Create Account
+                  </Button>
+                </div>
+              </form>
+            </DialogContent>
+          </Dialog>
         </div>
       </div>
 

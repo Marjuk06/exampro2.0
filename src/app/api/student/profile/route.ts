@@ -41,11 +41,23 @@ export const PATCH = withApiHandler(async (request) => {
 
   const body = await request.json();
   const db = getAdminDb();
-  const allowed = ["bio", "favoriteSubjects", "name", "avatarUrl"] as const;
   const updates: Record<string, unknown> = { updatedAt: Date.now() };
-  for (const key of allowed) {
-    if (body[key] !== undefined) updates[key] = body[key];
+
+  if (body.resetAvatar === true) {
+    const { getAuth } = await import("firebase-admin/auth");
+    const userRecord = await getAuth().getUser(session.uid);
+    if (userRecord.photoURL) {
+      updates.avatarUrl = userRecord.photoURL;
+    } else {
+      updates.avatarUrl = `https://api.dicebear.com/9.x/micah/svg?seed=${session.uid}`;
+    }
+  } else {
+    const allowed = ["bio", "favoriteSubjects", "name", "avatarUrl"] as const;
+    for (const key of allowed) {
+      if (body[key] !== undefined) updates[key] = body[key];
+    }
   }
+
   await db.doc(paths.userProfile(session.uid)).update(updates);
   await syncPublicProfile(db, session.uid);
   return jsonOk({ ok: true });

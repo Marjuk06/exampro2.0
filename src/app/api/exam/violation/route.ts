@@ -3,6 +3,7 @@ import { getServerSession } from "@/lib/auth/session";
 import { getAdminDb } from "@/lib/firebase/admin";
 import { paths } from "@/lib/firebase/paths";
 import { violationSchema } from "@/lib/validations/exam";
+import { telegramNotificationService } from "@/server/telegram/notification-service";
 
 export async function POST(request: Request) {
   const session = await getServerSession();
@@ -26,6 +27,9 @@ export async function POST(request: Request) {
     metadata: metadata ?? {},
     timestamp: Date.now(),
   });
+
+  // Fire and forget Telegram alert
+  telegramNotificationService.notifyCheatAlert(session.uid, examId, type).catch(console.error);
 
   return NextResponse.json({ ok: true });
 }

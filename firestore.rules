@@ -210,6 +210,20 @@ service cloud.firestore {
       allow write: if false;
     }
 
+    // ——— Telegram Collections ———
+    match /artifacts/{appId}/public/data/telegram_links/{tokenId} {
+      allow read, update, delete: if isSignedIn() && resource.data.uid == request.auth.uid;
+      allow create: if isSignedIn() && request.resource.data.uid == request.auth.uid;
+    }
+    match /artifacts/{appId}/public/data/telegram_logs/{docId} {
+      allow read: if isAdmin();
+      allow write: if false;
+    }
+    match /artifacts/{appId}/public/data/telegram_broadcasts/{docId} {
+      allow read: if isAdmin();
+      allow write: if false;
+    }
+
     // Deny any other paths under artifacts
     match /artifacts/{appId}/{document=**} {
       allow read, write: if false;

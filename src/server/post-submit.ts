@@ -7,6 +7,7 @@ import { recordActivity } from "@/server/services/engagement/activity.service";
 import { missionsService } from "@/server/services/engagement/missions.service";
 import { recordRankHistory } from "@/server/services/engagement/rank-history.service";
 import { processIncrementalRanking } from "@/server/services/ranking/incremental-rank.service";
+import { telegramNotificationService } from "@/server/telegram/notification-service";
 import { paths } from "@/lib/firebase/paths";
 import type { Exam, ExamResult, Question } from "@/types";
 
@@ -183,6 +184,15 @@ export async function processMcqSubmission(
           }));
         }
       }
+      
+      // Send Telegram notification (fire and forget)
+      telegramNotificationService.notifyResult(
+        uid,
+        exam.title,
+        score,
+        maxScore
+      ).catch(console.error);
+
       await Promise.all(notifications);
     })()
   ];

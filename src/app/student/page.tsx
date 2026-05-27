@@ -10,6 +10,7 @@ import { EngagementHub } from "@/components/student/engagement-hub";
 import { PracticePanel } from "@/components/student/practice-panel";
 import { RevisionPanel } from "@/components/student/revision-panel";
 import { SocialPanel } from "@/components/student/social-panel";
+import { TelegramSettingsPanel } from "@/components/student/telegram-settings-panel";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ErrorBoundary } from "@/components/error-boundary";
 
@@ -29,6 +30,7 @@ function StudentTabs() {
           <TabsTrigger value="revision">Revision</TabsTrigger>
           <TabsTrigger value="social">Social</TabsTrigger>
           <TabsTrigger value="achievements">Achievements</TabsTrigger>
+          <TabsTrigger value="telegram">Telegram</TabsTrigger>
         </TabsList>
         <TabsContent value="exams">
           <ErrorBoundary section="Exam Dashboard">
@@ -73,6 +75,12 @@ function StudentTabs() {
         <TabsContent value="achievements">
           <ErrorBoundary section="Achievements">
             <AchievementsPanel />
+          </ErrorBoundary>
+        </TabsContent>
+        <TabsContent value="telegram">
+          <h2 className="mb-4 text-2xl font-bold">Telegram Integration</h2>
+          <ErrorBoundary section="Telegram Settings">
+            <TelegramSettingsPanel />
           </ErrorBoundary>
         </TabsContent>
       </Tabs>

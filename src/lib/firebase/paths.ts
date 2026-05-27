@@ -106,4 +106,11 @@ export const paths = {
   // Phase 4: Question images
   questionImageStorage: (questionId: string, fileName: string) =>
     `questions/${questionId}/${fileName}`,
+  // Telegram Integration
+  telegramLinks: () => `artifacts/${APP_ID}/public/data/telegram_links`,
+  telegramLink: (tokenId: string) => `artifacts/${APP_ID}/public/data/telegram_links/${tokenId}`,
+  telegramLogs: () => `artifacts/${APP_ID}/public/data/telegram_logs`,
+  telegramLog: (docId: string) => `artifacts/${APP_ID}/public/data/telegram_logs/${docId}`,
+  telegramBroadcasts: () => `artifacts/${APP_ID}/public/data/telegram_broadcasts`,
+  telegramBroadcast: (docId: string) => `artifacts/${APP_ID}/public/data/telegram_broadcasts/${docId}`,
 };

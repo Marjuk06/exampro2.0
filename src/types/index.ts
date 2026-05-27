@@ -24,6 +24,8 @@ export interface UserProfile {
   role: UserRole;
   avatarUrl?: string;
   bio?: string;
+  telegramChatId?: string;
+  telegramUsername?: string;
   /** Gamification — optional on legacy profiles */
   xp?: number;
   level?: number;
@@ -199,3 +201,30 @@ export interface SessionPayload {
   role: UserRole;
   exp: number;
 }
+
+export interface TelegramLinkToken {
+  id: string; // The token itself (e.g. 6-digit code)
+  uid: string;
+  createdAt: number;
+  expiresAt: number;
+}
+
+export interface TelegramLog {
+  id: string;
+  message: string;
+  type: "info" | "error" | "violation" | "command";
+  chatId?: string;
+  uid?: string;
+  timestamp: number;
+}
+
+export interface TelegramBroadcast {
+  id: string;
+  message: string;
+  sentBy: string; // admin uid
+  targetRole?: UserRole | "all";
+  successCount: number;
+  failureCount: number;
+  timestamp: number;
+}
+
